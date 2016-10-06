@@ -6,9 +6,9 @@ int main(int argc, char *argv[]) {
 
   int listenfd;
   if ((listenfd = createSocket(port)) == -1) {
-		printf("Error createSocket(): %s(%d)\n", strerror(errno), errno);
-		exit(1);
-	}
+    printf("Error createSocket(): %s(%d)\n", strerror(errno), errno);
+    exit(1);
+  }
 
   int connfd, pid;
   while (true) {
@@ -19,15 +19,15 @@ int main(int argc, char *argv[]) {
 
     pid = fork();
     if (pid < 0) {
-			printf("Error fork(): %s(%d)\n", strerror(errno), errno);
+      printf("Error fork(): %s(%d)\n", strerror(errno), errno);
     } else if (pid == 0) {
       // child process
       close(listenfd);
 
       //do something
 
-			close(connfd);
-			exit(0);
+      close(connfd);
+      exit(0);
     }
 
     close(connfd);
