@@ -1,4 +1,5 @@
 #include "client.h"
+#include "util.h"
 
 #include <netdb.h>
 
@@ -42,7 +43,30 @@ int main(int argc, char* argv[]) {
 
   printf("connected to %s.\n", host);
 
-  
+  while (true) {
+    char buffer[BUFFER_SIZE];
+    struct command cmd;
+    if (readcmd(buffer, sizeof(buffer), &cmd) == -1) {
+      printf("Error readcmd(): %s(%d)\n", strerror(errno), errno);
+      continue;
+    }
+  }
 
   return 0;
+}
+
+
+int readcmd(char *buf, int size, struct command* ptrcmd) {
+  printf("ftp> ");
+  fflush(stdout);
+
+  int ret = readinput(buf, size);
+  if (ret == 0) {
+    memset(ptrcmd, 0, sizeof(ptrcmd));
+    strncpy(ptrcmd->name, buf, 4);
+    strcpy(ptrcmd->arg, buf+5);
+    return SUCC;
+  } else {
+    return FAIL;
+  }
 }
