@@ -1,0 +1,48 @@
+#include "client.h"
+
+#include <netdb.h>
+
+int connfd;
+
+int main(int argc, char* argv[]) {
+
+  char *host = "localhost";
+  char *port = "21";
+
+  struct addrinfo hints, *res;
+  memset(&hints, 0, sizeof(struct addrinfo));
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+
+  if (getaddrinfo(host, port, &hints, &res) == -1) {
+    printf("Error getaddrinfo(): %s(%d)\n", strerror(errno), errno);
+    exit(1);
+  }
+
+  struct addrinfo *rp = res;
+  while (rp != NULL) {
+    connfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+    if (connfd == -1) {
+      printf("Error socket(): %s(%d)\n", strerror(errno), errno);
+      continue;
+    }
+
+    if (connect(connfd, res->ai_addr, res->ai_addrlen) == 0) {
+      break;
+    } else {
+      printf("Error connect(): %s(%d)\n", strerror(errno), errno);
+      exit(1);
+    }
+
+    close(connfd);
+
+    rp = rp->ai_next;
+  }
+  freeaddrinfo(rp);
+
+  printf("connected to %s.\n", host);
+
+  
+
+  return 0;
+}
