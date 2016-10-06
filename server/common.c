@@ -43,7 +43,7 @@ int acceptSocket(int listenfd) {
   struct sockaddr_in addr;
   int len = sizeof(addr);
 
-  sockfd = accept(listenfd, (struct sockaddr *) &client_addr, &len);
+  sockfd = accept(listenfd, (struct sockaddr *) &addr, (socklen_t *) &len);
   if (sockfd == -1) {
     printf("Error accept(): %s(%d)\n", strerror(errno), errno);
     return -1;
@@ -62,9 +62,9 @@ int connectSocket(int port, char *host) {
 
   struct sockaddr_in addr;
   memset(&addr, 0, sizeof(addr));
-  dest_addr.sin_family = AF_INET;
-  dest_addr.sin_port = htons(port);
-  dest_addr.sin_addr.s_addr = inet_addr(host);
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(port);
+  addr.sin_addr.s_addr = inet_addr(host);
 
   if(connect(sockfd, (struct sockaddr *) &addr, sizeof(addr)) < 0 ) {
   printf("Error connect(): %s(%d)\n", strerror(errno), errno);

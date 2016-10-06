@@ -3,14 +3,17 @@
 
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/select.h>
-#include <sys/epoll.h>
+// #include <sys/epoll.h>
+#include <arpa/inet.h>
 #include <netinet/in.h>
 
 #include <unistd.h>
 #include <errno.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 #include <memory.h>
@@ -25,7 +28,7 @@
 
 int createSocket(int port);
 int acceptSocket(int sockfd);
-int connectSocket(int sockfd);
+int connectSocket(int port, char *host);
 
 
 #endif
