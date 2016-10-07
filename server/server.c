@@ -4,6 +4,7 @@ int main(int argc, char *argv[]) {
 
   int port = atoi(argv[1]);
 
+  // createa passive socket
   int listenfd;
   if ((listenfd = createSocket(port)) == -1) {
     printf("Error createSocket(): %s(%d)\n", strerror(errno), errno);
@@ -12,11 +13,13 @@ int main(int argc, char *argv[]) {
 
   int connfd, pid;
   while (true) {
+    // create connected socket
     connfd = acceptSocket(listenfd);
     if (connfd == -1) {
       break;
     }
 
+    // fork a child process to handle client connection
     pid = fork();
     if (pid < 0) {
       printf("Error fork(): %s(%d)\n", strerror(errno), errno);
@@ -29,6 +32,7 @@ int main(int argc, char *argv[]) {
       close(connfd);
       exit(0);
     }
+    // parent process
 
     close(connfd);
   }
@@ -38,10 +42,13 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-/*
-* wrapper for socket
-*/
+/*********************************
+*
+*     wrapper for socket
+*
+*********************************/
 
+// socket() -> setsockopt() -> bind() -> listen()  =>  listenfd
 int createSocket(int port) {
 
   int sockfd;
@@ -79,6 +86,7 @@ int createSocket(int port) {
   return sockfd;
 }
 
+// accept()  =>  connfd
 int acceptSocket(int listenfd) {
 
   int sockfd;
@@ -94,6 +102,7 @@ int acceptSocket(int listenfd) {
   return sockfd;
 }
 
+// socket() -> connect()  =>  
 int connectSocket(int port, char *host) {
 
   int sockfd;
@@ -116,7 +125,7 @@ int connectSocket(int port, char *host) {
   return sockfd;
 }
 
-// Child process
+// fork a child process to handle transition
 void handleConnection(int connfd) {
   // welcome
   response(connfd, 220);
@@ -139,7 +148,7 @@ int connectDataSocket(int connfd) {
   //todo
 }
 
-// reply code
+// send() with reply code
 int response(int sockfd, int rc) {
   int rc_n = htonl(rc);
   if (send(sockfd, &rc_n, sizeof(rc_n), 0) == -1) {
@@ -149,7 +158,7 @@ int response(int sockfd, int rc) {
   return SUCC;
 }
 
-// recieve command
+// recv() -> send(rc)
 int recvCommand(int connfd, (struct Command *) ptrcmd) {
 
   char buffer[BUFFER_SIZE];
