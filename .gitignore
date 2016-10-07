@@ -21,6 +21,8 @@
 *.dylib
 
 # Executables
+ftpserver
+ftpclient
 *.exe
 *.out
 *.app

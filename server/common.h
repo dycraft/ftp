@@ -26,16 +26,12 @@
 #define FAIL -1
 
 #define BUFFER_SIZE 8192
-#define DEFAULT_PORT 14543
+#define DEFAULT_PORT 21
 
-struct command {
+// struct
+struct Command {
   char name[5];
   char arg[256];
 };
-
-int createSocket(int port);
-int acceptSocket(int sockfd);
-int connectSocket(int port, char *host);
-
 
 #endif

@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
 
   while (true) {
     char buffer[BUFFER_SIZE];
-    struct command cmd;
+    struct Command cmd;
     if (readCmd(buffer, sizeof(buffer), &cmd) == -1) {
       printf("Error *readcmd(): %s(%d)\n", strerror(errno), errno);
       continue;
@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
 }
 
 
-int readCommand(char *buf, int size, struct command* ptrcmd) {
+int readCommand(char *buf, int size, struct Command* ptrcmd) {
   printf("ftp> ");
   fflush(stdout);
 
