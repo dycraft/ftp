@@ -1,6 +1,8 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-int readinput(char *buf, int size);
+#include "../server/common.h"
+
+int readInput(char *buf, int size);
 
 #endif

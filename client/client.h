@@ -3,6 +3,6 @@
 
 #include "../server/common.h"
 
-int readcmd(char *buf, int size, struct command* ptrcmd);
+int readCommand(char *buf, int size, struct command* ptrcmd);
 
 #endif

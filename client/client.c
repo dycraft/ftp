@@ -46,23 +46,30 @@ int main(int argc, char* argv[]) {
   while (true) {
     char buffer[BUFFER_SIZE];
     struct command cmd;
-    if (readcmd(buffer, sizeof(buffer), &cmd) == -1) {
-      printf("Error readcmd(): %s(%d)\n", strerror(errno), errno);
+    if (readCmd(buffer, sizeof(buffer), &cmd) == -1) {
+      printf("Error *readcmd(): %s(%d)\n", strerror(errno), errno);
       continue;
     }
+
+    if (send(connfd, buffer, (size_t)strlen(buffer), 0) == -1) {
+      close(connfd);
+      exit(1);
+    }
   }
+
+  close(connfd);
 
   return 0;
 }
 
 
-int readcmd(char *buf, int size, struct command* ptrcmd) {
+int readCommand(char *buf, int size, struct command* ptrcmd) {
   printf("ftp> ");
   fflush(stdout);
 
-  int ret = readinput(buf, size);
+  int ret = readInput(buf, size);
   if (ret == 0) {
-    memset(ptrcmd, 0, sizeof(ptrcmd));
+    memset(ptrcmd, 0, sizeof(*ptrcmd));
     strncpy(ptrcmd->name, buf, 4);
     strcpy(ptrcmd->arg, buf+5);
     return SUCC;
