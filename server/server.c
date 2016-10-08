@@ -7,6 +7,9 @@ int main(int argc, char *argv[]) {
 
   int port = atoi(argv[1]);
 
+  // reply.h
+  reply_init();
+
   // createa passive socket
   int listenfd;
   if ((listenfd = createSocket(port)) == -1) {
@@ -204,7 +207,11 @@ void *p_executeCommand(void *arg) {
   struct Command cmd = *(struct Command *)arg[0];
   struct int connfd = *(int *)arg[1];
 
-
+  for (int i = 0; i < strlen(cmdlist); i++) {
+    if (cmdlist[i] == cmd.name) {
+      execlist[i](1, cmd.arg);
+    }
+  }
 
   return NULL;
 }

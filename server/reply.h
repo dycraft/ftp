@@ -6,6 +6,6 @@
 
 extern char *reply[554];
 
-void initReply();
+void reply_init();
 
 #endif

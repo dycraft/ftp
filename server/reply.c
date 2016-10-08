@@ -2,7 +2,7 @@
 
 char *reply[554] = {};
 
-void initReply() {
+void reply_init() {
   reply[200] = "200 Command okay.\n";
   reply[500] = "500 Syntax error, Command unrecognized.\n";
   reply[501] = "501 Syntax error in parameters or arguments.\n";
