@@ -1,4 +1,6 @@
 #include "server.h"
+#include "reply.h"
+#include "fdlist.h"
 
 int main(int argc, char *argv[]) {
 
@@ -11,33 +13,57 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  int connfd, pid;
+  prinf("Server start at port: %d, waiting for client...", port);
+
+  struct timeval timeout;
+  timeout.tv_sec = 0;
+  timeout.tv_usec = 0;
+
+  struct fd_set readfd;
+  struct FdList fdlist;
+  fdlist_init(&fdlist);
+
   while (true) {
-    // create connected socket
-    connfd = acceptSocket(listenfd);
-    if (connfd == -1) {
-      break;
+
+    FD_ZERO(&readfd);
+    FD_SET(listenfd, &readfd); // add the first: listenfd
+    fdlist_poll(&fdlist, &readfd); // add the rest
+
+    if (Select(fdlist_max(&fdlist) + 1, &readfd, NULL, NULL, &timeout) <= 0) {
+      continue;
     }
 
-    // fork a child process to handle client connection
-    pid = fork();
-    if (pid < 0) {
-      printf("Error fork(): %s(%d)\n", strerror(errno), errno);
-    } else if (pid == 0) {
-      // child process
-      close(listenfd);
+    // accept connection from client
+    int connfd;
+    if (FD_ISSET(listenfd, &readfd)) {
+      connfd = acceptSocket(listenfd);
+      if (connfd < 0) {
 
-      handleConnection(connfd);
+      }
 
-      close(connfd);
-      exit(0);
+      fdlist_add(&fdlist, connfd);
+      response(connfd, RC_LOGIN);
+
+      printf("Server accept client's connection.");
     }
-    // parent process
 
-    close(connfd);
+    //parse command
+    for (int i = 0; i < fdlist->size; i++) {
+      if (FD_ISSET(fdlist->list[i], &readfd)) {
+        struct Command cmd;
+        memset(&cmd, 0, sizeof(cmd));
+        int rc = recvCommand(fdlist->list[i], cmd);
+        printf("cmd: %s", reply[rc]);
+
+        // exec cmd
+
+      }
+    }
   }
 
   close(listenfd);
+
+  printf("Server closed.");
 
   return 0;
 }
@@ -102,7 +128,8 @@ int acceptSocket(int listenfd) {
   return sockfd;
 }
 
-// socket() -> connect()  =>  
+//
+// socket() -> connect()  =>
 int connectSocket(int port, char *host) {
 
   int sockfd;
@@ -117,7 +144,7 @@ int connectSocket(int port, char *host) {
   addr.sin_port = htons(port);
   addr.sin_addr.s_addr = inet_addr(host);
 
-  if(connect(sockfd, (struct sockaddr *) &addr, sizeof(addr)) < 0 ) {
+  if(connect(sockfd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
     printf("Error connect(): %s(%d)\n", strerror(errno), errno);
     return -1;
   }
@@ -125,32 +152,11 @@ int connectSocket(int port, char *host) {
   return sockfd;
 }
 
-// fork a child process to handle transition
-void handleConnection(int connfd) {
-  // welcome
-  response(connfd, 220);
-
-  // user
-
-
-  while (true) {
-    struct Command cmd;
-    int rc = recvCommand(connfd, cmd);
-    if ((rc == 221) || (rc < 0)) {
-      break;
-    } else if (rc == 200) {
-
-    }
-  }
-}
-
-int connectDataSocket(int connfd) {
-  //todo
-}
-
 // send() with reply code
 int response(int sockfd, int rc) {
   int rc_n = htonl(rc);
+  printf("Send reply code: %d", rc);
+
   if (send(sockfd, &rc_n, sizeof(rc_n), 0) == -1) {
     printf("Error send(): %s(%d)\n", strerror(errno), errno);
     return FAIL;
@@ -162,25 +168,41 @@ int response(int sockfd, int rc) {
 int recvCommand(int connfd, (struct Command *) ptrcmd) {
 
   char buffer[BUFFER_SIZE];
-
   memset(buffer, 0, BUFFER_SIZE);
 
-  if (recv(connfd, buffer, BUFFER_SIZE, 0) == -1) {
-    printf("Error recv(): %s(%d)\n", strerror(errno), errno);
+  int r_recv = recv(fdlist->list[i], buffer, BUFFER_SIZE, MSG_DONTWAIT);
+  if (r_recv == -1) {
+    fdlist_del(&fdlist, fdlist->list[i]);
+    printf("Error recv(): %s(%d), timeout.\n", strerror(errno), errno);
     return FAIL;
-  }
-
-  memset(ptrcmd, 0, sizeof(*ptrcmd));
-  strncpy(ptrcmd->name, buf, 4);
-  strcpy(ptrcmd->arg, buf+5);
-
-  int rc = 200;
-  if (strcmp(cmd, "QUIT") == 0) {
-    rc = 221;
+  } else if (r_recv == 0){
+    fdlist_del(&fdlist, fdlist->list[i]);
+    printf("Error recv(): %s(%d), client disconnect.\n", strerror(errno), errno);
+    return FAIL;
   } else {
-    rc = 500;
-  }
-  response(connfd, rc);
+    printf("Recieve command: %s", buffer);
 
-  return rc;
+    // parse command
+    memset(ptrcmd, 0, sizeof(*ptrcmd));
+    strncpy(ptrcmd->name, buf, 4);
+    strcpy(ptrcmd->arg, buf+5);
+
+    // send command
+    /*int rc = 200; //command ok
+    if (strcmp(cmd, "QUIT") == 0) {
+      rc = 221;
+    } else {
+      rc = 500;
+    }
+    response(connfd, rc);*/
+
+    return rc;
+  }
+}
+
+
+int *p_executeCommand(void *arg) {
+  threadArg *t = (threadArg*)arg;
+  executeCommand(t->cmd, t->parameter, t->set, t->i);
+  return NULL;
 }
