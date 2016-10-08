@@ -1,6 +1,7 @@
 #include "server.h"
 #include "reply.h"
 #include "fdlist.h"
+#include "command.h"
 
 int main(int argc, char *argv[]) {
 
@@ -38,7 +39,7 @@ int main(int argc, char *argv[]) {
     if (FD_ISSET(listenfd, &readfd)) {
       connfd = acceptSocket(listenfd);
       if (connfd < 0) {
-
+        printf("Error acceptSocket(): %s(%d)\n", strerror(errno), errno);
       }
 
       fdlist_add(&fdlist, connfd);
@@ -55,8 +56,12 @@ int main(int argc, char *argv[]) {
         int rc = recvCommand(fdlist->list[i], cmd);
         printf("cmd: %s", reply[rc]);
 
-        // exec cmd
-
+        // exec cmd in pthread
+        pthread_t tid;
+        void *arg[] = { &cmd, &(fdlist->list[i]) };
+        if (pthread_create(&tid, NULL, p_executeCommand, arg) == 0) {
+          printf("Error pthread_create(): %s(%d), command failed.\n", strerror(errno), errno);
+        }
       }
     }
   }
@@ -187,22 +192,19 @@ int recvCommand(int connfd, (struct Command *) ptrcmd) {
     strncpy(ptrcmd->name, buf, 4);
     strcpy(ptrcmd->arg, buf+5);
 
-    // send command
-    /*int rc = 200; //command ok
-    if (strcmp(cmd, "QUIT") == 0) {
-      rc = 221;
-    } else {
-      rc = 500;
-    }
-    response(connfd, rc);*/
+    // send command status
+    response(connfd, RC_CMD_OK);
 
     return rc;
   }
 }
 
 
-int *p_executeCommand(void *arg) {
-  threadArg *t = (threadArg*)arg;
-  executeCommand(t->cmd, t->parameter, t->set, t->i);
+void *p_executeCommand(void *arg) {
+  struct Command cmd = *(struct Command *)arg[0];
+  struct int connfd = *(int *)arg[1];
+
+
+
   return NULL;
 }

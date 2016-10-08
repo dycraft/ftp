@@ -12,6 +12,6 @@ int connectSocket(int port, char *host);
 int response(int sockfd, int rc);
 int recvCommand(int connfd, (struct Command *) ptrcmd);
 
-int *p_executeCommand(void *arg);
+void *p_executeCommand(void *arg);
 
 #endif
