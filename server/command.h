@@ -2,6 +2,7 @@
 #define COMMAND_H
 
 #include "common.h"
+#include "reply.h"
 
 #define CMD_USER  0
 #define CMD_PASS  1
@@ -26,8 +27,8 @@ extern char *cmdlist[] = {
   "ABOR"
 };
 
-int cmd_user(int argc, char *argv[]);
-int cmd_pass(int argc, char *argv[]);
+int cmd_user(int argc, char *argv[], int connfd);
+int cmd_pass(int argc, char *argv[], int connfd);
 
 extern void *execlist[] = {
   &cmd_user,

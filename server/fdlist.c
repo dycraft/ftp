@@ -48,12 +48,11 @@ int fdlist_add((struct FdList *) fdlist, int sockfd) {
   return true;
 }
 
-int fdlist_del((struct FdList *) fdlist, int sockfd, (struct fd_set *) fdset) {
+int fdlist_del((struct FdList *) fdlist, int sockfd) {
   for (int i = 0; i < fdlist->size; i++) {
     if (fdlist->list[i] == sockfd) {
       close(sockfd);
-      FD_CLR(sockfd, fdset);
-      
+
       fdlist->size -= 1;
       fdlist->list[i] = fdlist[fdlist->size];
       memset(fdlist->list + fdlist->size, 0, sizeof(int));

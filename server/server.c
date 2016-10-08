@@ -3,6 +3,8 @@
 #include "fdlist.h"
 #include "command.h"
 
+// fdlist del删除的时候需要同时调用FD_CLR？
+
 int main(int argc, char *argv[]) {
 
   int port = atoi(argv[1]);
@@ -46,7 +48,7 @@ int main(int argc, char *argv[]) {
       }
 
       fdlist_add(&fdlist, connfd);
-      response(connfd, RC_LOGIN);
+      response(connfd, RC_NEW_USER);
 
       printf("Server accept client's connection.");
     }
@@ -65,6 +67,8 @@ int main(int argc, char *argv[]) {
         if (pthread_create(&tid, NULL, p_executeCommand, arg) == 0) {
           printf("Error pthread_create(): %s(%d), command failed.\n", strerror(errno), errno);
         }
+        FD_CLR(fdlist->list[i], &readfd);
+        fdlist_del(fdlist, fdlist->list[i]);
       }
     }
   }
@@ -160,18 +164,6 @@ int connectSocket(int port, char *host) {
   return sockfd;
 }
 
-// send() with reply code
-int response(int sockfd, int rc) {
-  int rc_n = htonl(rc);
-  printf("Send reply code: %d", rc);
-
-  if (send(sockfd, &rc_n, sizeof(rc_n), 0) == -1) {
-    printf("Error send(): %s(%d)\n", strerror(errno), errno);
-    return FAIL;
-  }
-  return SUCC;
-}
-
 // recv() -> send(rc)
 int recvCommand(int connfd, (struct Command *) ptrcmd) {
 
@@ -209,7 +201,11 @@ void *p_executeCommand(void *arg) {
 
   for (int i = 0; i < strlen(cmdlist); i++) {
     if (cmdlist[i] == cmd.name) {
-      execlist[i](1, cmd.arg);
+      if (execlist[i](1, cmd.arg) == SUCC) {
+        //response(int sockfd, int rc)
+      } else {
+
+      }
     }
   }
 
