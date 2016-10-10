@@ -26,6 +26,10 @@
 
 #define BUFFER_SIZE 8192
 
-#define DEFAULT_PORT 21
+#define DEFAULT_PORT  21
+#define DEFAULT_ROOT  "/tmp"
+
+extern int port;
+extern char *root;
 
 #endif

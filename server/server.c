@@ -5,9 +5,16 @@
 // fdlist del删除的时候需要同时调用FD_CLR？
 // cmd 发送过来后，有且仅有一个response?
 
+int port;
+char *root;
+
 int main(int argc, char *argv[]) {
 
-  int port = atoi(argv[1]);
+  // check command line arguments
+  if (handleCliArg(argc, argv) == FAIL) {
+    printf("Parameters Error. Input as\n\t./ftpserver [-port PORT] [-root DIR]\n");
+    return 0;
+  }
 
   // reply.h
   reply_init();
@@ -80,6 +87,38 @@ int main(int argc, char *argv[]) {
   printf("Server closed.");
 
   return 0;
+}
+
+int handleCliArg(int argc, char *argv[]) {
+  if ((argc != 1) && (argc != 3) && (argc != 5)) {
+    return FAIL;
+  }
+
+  int n_root = 0;
+  int n_port = 0;
+
+  for (int i = 1; i <= argc-2; i += 2) {
+    if (strcmp(argv[i], "-port") == 0) {
+      n_port = i + 1;
+    }
+    if (strcmp(argv[i], "-root") == 0) {
+      n_root = i + 1;
+    }
+  }
+
+  if (n_port == 0) {
+    port = DEFAULT_PORT;
+  } else {
+    port = atoi(argv[n_port]);
+  }
+
+  if (n_root == 0) {
+    root = DEFAULT_ROOT;
+  } else {
+    root = argv[n_root];
+  }
+
+  return SUCC;
 }
 
 /*********************************
