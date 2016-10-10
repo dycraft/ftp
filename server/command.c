@@ -85,12 +85,14 @@ int cmd_user(int argc, char *argv[], int connfd) {
 int cmd_pass(int argc, char *argv[], int connfd) {
   if (argc != 0) {
     printf("Password error.");
+    response(connfd, RC_PASS_ERR);
     return FAIL;
   }
 
   response(connfd, RC_CMD_OK);
 
-  response(connfd, RC_PASS_ERR);
+  // login successfully
+  response(connfd, RC_LOGIN);
 
   return SUCC;
 }
