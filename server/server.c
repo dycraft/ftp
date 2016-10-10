@@ -4,6 +4,7 @@
 #include "command.h"
 
 // fdlist del删除的时候需要同时调用FD_CLR？
+// cmd 发送过来后，有且仅有一个response?
 
 int main(int argc, char *argv[]) {
 
@@ -165,7 +166,7 @@ int connectSocket(int port, char *host) {
 }
 
 // recv() -> send(rc)
-int recvCommand(int connfd, (struct Command *) ptrcmd) {
+int recvCommand(int connfd, struct Command *ptrcmd) {
 
   char buffer[BUFFER_SIZE];
   memset(buffer, 0, BUFFER_SIZE);
@@ -183,12 +184,7 @@ int recvCommand(int connfd, (struct Command *) ptrcmd) {
     printf("Recieve command: %s", buffer);
 
     // parse command
-    memset(ptrcmd, 0, sizeof(*ptrcmd));
-    strncpy(ptrcmd->name, buf, 4);
-    strcpy(ptrcmd->arg, buf+5);
-
-    // send command status
-    response(connfd, RC_CMD_OK);
+    command_parse(ptrcmd, buffer);
 
     return rc;
   }
@@ -201,13 +197,15 @@ void *p_executeCommand(void *arg) {
 
   for (int i = 0; i < strlen(cmdlist); i++) {
     if (cmdlist[i] == cmd.name) {
-      if (execlist[i](1, cmd.arg) == SUCC) {
-        //response(int sockfd, int rc)
-      } else {
-
+      if (execlist[i](1, cmd.arg, connfd) == FAIL) {
+        printf("Error %s(): %s(%d).\n", cmdlist[i], strerror(errno), errno);
       }
+      return NULL;
     }
   }
+
+  // command not implemented
+  response(connfd, RC_NO_IMP);
 
   return NULL;
 }

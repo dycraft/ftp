@@ -1,29 +1,76 @@
 #include "command.h"
+#include "reply.h"
 
-//// common function in cmd_function
+/* command's methods */
 
-// check => response(rc_syntax_error)
-void checkArg(int argc, char format[], int connfd) {
-  if (argc != argc) {
+void command_init(struct Command * cmd) {
+  memset(cmd, 0, sizeof(*cmd));
+}
+
+void command_parse(struct Command * cmd, char *buf) {
+  // protect the buffer string
+  char s[BUFFER_SIZE];
+  strcpy(s, buf);
+
+  // strtok
+  char *delim = " ";
+  char *p;
+  int i = 0;
+  cmd->name = strtok(s, delim);
+  while ((p = strtok(NULL, delim))) {
+    cmd->arg[i] = p;
+    i++;
+  }
+  cmd->argc = i;
+}
+
+
+
+/* common function in cmd_function */
+
+// check => false:response(RC_SYNTAX_ERR_error)
+//          true :response(rc_cmd_ok)
+void checkArg(int argc, int c, char format[]) {
+  if (argc != c) {
     printf("Syntax error. Input as\n\t%s", format);
-    response(connfd, RC_SYNTAX);
     return false;
   } else {
     return true;
   }
 }
 
-//// cmd_functions
+/* cmd_functions */
 
 // USER
 int cmd_user(int argc, char *argv[], int connfd) {
-  if (!ckeckArg(1, "USER [user_name]")) {
+  if (!ckeckArg(argc, 1, "USER [username]")) {
+    response(connfd, RC_SYNTAX_ERR);
     return FAIL;
   }
 
   if (argv[0] != "anonymous") {
+    response(connfd, RC_ARG_ERR);
     return FAIL;
   }
+
+  response(connfd, RC_CMD_OK);
+
+  // username pass
+  response(connfd, RC_NEED_PASS);
+
+  return SUCC;
+}
+
+// PASS
+int cmd_pass(int argc, char *argv[], int connfd) {
+  if (argc != 0) {
+    printf("Password error.");
+    return FAIL;
+  }
+
+  response(connfd, RC_CMD_OK);
+
+  response(connfd, RC_PASS_ERR);
 
   return SUCC;
 }

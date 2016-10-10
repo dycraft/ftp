@@ -16,10 +16,18 @@
 #define CMD_ABOR  8
 
 
+// struct Command and methods
+#define ARG_MAX 3
+
 struct Command {
-  char name[5];
-  char arg[256];
+  char *name;
+  int argc;
+  char *arg[ARG_MAX];
 };
+
+void command_init(struct Command *cmd);
+void command_parse(struct Command *cmd, char *buf);
+
 
 // cmdlist: cmd_name array
 extern char *cmdlist[] = {
@@ -35,15 +43,15 @@ extern char *cmdlist[] = {
   "ABOR"
 };
 
-//// cmd_functions
+/* cmd_functions */
 
 int cmd_user(int argc, char *argv[], int connfd);
 int cmd_pass(int argc, char *argv[], int connfd);
 
-//// common function in cmd_function
+/* common function in cmd_function */
 
 // check the amount of command's arguments
-void checkArg(int argc, char format[]);
+void checkArg(int argc, int c, char format[]);
 
 // execlist: function array
 extern void *execlist[] = {

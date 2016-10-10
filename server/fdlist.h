@@ -14,24 +14,24 @@ struct FdList {
 }
 
 // init
-void fdlist_init((struct FdList *) fdlist);
+void fdlist_init(struct FdList *fdlist);
 
 // get max
-int fdlist_max((struct FdList *) fdlist);
+int fdlist_max(struct FdList *fdlist);
 
 // poll out the fd_set into fdlist
-void fdlist_poll((struct FdList *) fdlist, (struct fd_set *) sockfd);
+void fdlist_poll(struct FdList *fdlist, struct fd_set *sockfd);
 
 // is full
-int fdlist_isfull((struct FdList *) fdlist);
+int fdlist_isfull(struct FdList *fdlist);
 
 // is contained
-int fdlist_isset((struct FdList *) fdlist, int sockfd);
+int fdlist_isset(struct FdList *fdlist, int sockfd);
 
 // add
-int fdlist_add((struct FdList *) fdlist, int sockfd);
+int fdlist_add(struct FdList *fdlist, int sockfd);
 
 // del
-int fdlist_del((struct FdList *) fdlist, int sockfd);
+int fdlist_del(struct FdList *fdlist, int sockfd);
 
 #endif

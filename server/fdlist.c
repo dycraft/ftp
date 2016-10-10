@@ -1,16 +1,17 @@
 #include "fdlist.h"
 
 // set to 0
-void fdlist_init((struct FdList *) fdlist) {
-  fdlist->size = 0;
+void fdlist_init(struct FdList *fdlist) {
+  /*fdlist->size = 0;
   for (int i = 0; i < FD_SETSIZE; i++) {
     fdlist->list[i] = 0;
     fdlist->state[i] = 0;
-  }
+  }*/
+  memset(fdlist, 0, sizeof(*fdlist));
 }
 
 // traverse the list to find max
-int fdlist_max((struct FdList *) fdlist) {
+int fdlist_max(struct FdList *fdlist) {
   int max = -1;
   for (int i = 0; i < size; i++) {
     if (fdlist->list[i] > max) {
@@ -21,19 +22,19 @@ int fdlist_max((struct FdList *) fdlist) {
 }
 
 // traverse and FD_SET
-void fdlist_poll((struct FdList *) fdlist, (struct fd_set *)sockfd) {
+void fdlist_poll(struct FdList *fdlist, struct fd_set *sockfd) {
   for (int i = 0; i < size; i++) {
     FD_SET(fdlist->list[i], sockfd);
   }
 }
 
 //
-int fdlist_isfull((struct FdList *) fdlist) {
+int fdlist_isfull(struct FdList *fdlist) {
   return (fdlist->size < FD_SETSIZE);
 }
 
 //
-int fdlist_isset((struct FdList *) fdlist, int sockfd) {
+int fdlist_isset(struct FdList *fdlist, int sockfd) {
   for (int i = 0; i < fdlist->size; i++) {
     if (fdlist->list[i] == sockfd) {
       return true;
@@ -43,7 +44,7 @@ int fdlist_isset((struct FdList *) fdlist, int sockfd) {
 }
 
 // isfull & isset => add
-int fdlist_add((struct FdList *) fdlist, int sockfd) {
+int fdlist_add(struct FdList *fdlist, int sockfd) {
   if (fdlist_isfull(fdlist)) {
     return false;
   }
@@ -55,7 +56,7 @@ int fdlist_add((struct FdList *) fdlist, int sockfd) {
 }
 
 // close => remove
-int fdlist_del((struct FdList *) fdlist, int sockfd) {
+int fdlist_del(struct FdList *fdlist, int sockfd) {
   for (int i = 0; i < fdlist->size; i++) {
     if (fdlist->list[i] == sockfd) {
       close(sockfd);
