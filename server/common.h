@@ -9,14 +9,13 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#include <unistd.h>
-#include <errno.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
 #include <memory.h>
+#include <unistd.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
 
@@ -27,11 +26,5 @@
 
 #define BUFFER_SIZE 8192
 #define DEFAULT_PORT 21
-
-// struct
-struct Command {
-  char name[5];
-  char arg[256];
-};
 
 #endif

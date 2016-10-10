@@ -1,5 +1,6 @@
 #include "fdlist.h"
 
+// set to 0
 void fdlist_init((struct FdList *) fdlist) {
   fdlist->size = 0;
   for (int i = 0; i < FD_SETSIZE; i++) {
@@ -8,6 +9,7 @@ void fdlist_init((struct FdList *) fdlist) {
   }
 }
 
+// traverse the list to find max
 int fdlist_max((struct FdList *) fdlist) {
   int max = -1;
   for (int i = 0; i < size; i++) {
@@ -18,16 +20,19 @@ int fdlist_max((struct FdList *) fdlist) {
   return max;
 }
 
-void fdlist_poll((struct FdList *) fdlist, (struct *)sockfd) {
+// traverse and FD_SET
+void fdlist_poll((struct FdList *) fdlist, (struct fd_set *)sockfd) {
   for (int i = 0; i < size; i++) {
     FD_SET(fdlist->list[i], sockfd);
   }
 }
 
+//
 int fdlist_isfull((struct FdList *) fdlist) {
   return (fdlist->size < FD_SETSIZE);
 }
 
+//
 int fdlist_isset((struct FdList *) fdlist, int sockfd) {
   for (int i = 0; i < fdlist->size; i++) {
     if (fdlist->list[i] == sockfd) {
@@ -37,6 +42,7 @@ int fdlist_isset((struct FdList *) fdlist, int sockfd) {
   return false;
 }
 
+// isfull & isset => add
 int fdlist_add((struct FdList *) fdlist, int sockfd) {
   if (fdlist_isfull(fdlist)) {
     return false;
@@ -48,6 +54,7 @@ int fdlist_add((struct FdList *) fdlist, int sockfd) {
   return true;
 }
 
+// close => remove
 int fdlist_del((struct FdList *) fdlist, int sockfd) {
   for (int i = 0; i < fdlist->size; i++) {
     if (fdlist->list[i] == sockfd) {
