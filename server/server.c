@@ -1,7 +1,6 @@
 #include "server.h"
 #include "reply.h"
 #include "fdlist.h"
-#include "command.h"
 
 // fdlist del删除的时候需要同时调用FD_CLR？
 // cmd 发送过来后，有且仅有一个response?
@@ -20,7 +19,7 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  prinf("Server start at port: %d, waiting for client...", port);
+  printf("Server start at port: %d, waiting for client...", port);
 
   struct timeval timeout;
   timeout.tv_sec = 0;
@@ -36,7 +35,7 @@ int main(int argc, char *argv[]) {
     FD_SET(listenfd, &readfd); // add the first: listenfd
     fdlist_poll(&fdlist, &readfd); // add the rest
 
-    if (Select(fdlist_max(&fdlist) + 1, &readfd, NULL, NULL, &timeout) <= 0) {
+    if (select(fdlist_max(&fdlist) + 1, &readfd, NULL, NULL, &timeout) <= 0) {
       continue;
     }
 
@@ -55,21 +54,23 @@ int main(int argc, char *argv[]) {
     }
 
     //parse command
-    for (int i = 0; i < fdlist->size; i++) {
-      if (FD_ISSET(fdlist->list[i], &readfd)) {
+    for (int i = 0; i < fdlist.size; i++) {
+      if (FD_ISSET(fdlist.list[i], &readfd)) {
         struct Command cmd;
         memset(&cmd, 0, sizeof(cmd));
-        int rc = recvCommand(fdlist->list[i], cmd);
-        printf("cmd: %s", reply[rc]);
+        int r_del = recvCommand(fdlist.list[i], &cmd);
+        if (r_del != SUCC) {
+          fdlist_del(&fdlist, r_del);
+        }
 
         // exec cmd in pthread
         pthread_t tid;
-        void *arg[] = { &cmd, &(fdlist->list[i]) };
-        if (pthread_create(&tid, NULL, p_executeCommand, arg) == 0) {
+        void *arg[] = { &(fdlist.list[i]), &cmd };
+        if (pthread_create(&tid, NULL, p_executeCommand, &arg) == 0) {
           printf("Error pthread_create(): %s(%d), command failed.\n", strerror(errno), errno);
         }
-        FD_CLR(fdlist->list[i], &readfd);
-        fdlist_del(fdlist, fdlist->list[i]);
+        FD_CLR(fdlist.list[i], &readfd);
+        fdlist_del(&fdlist, fdlist.list[i]);
       }
     }
   }
@@ -171,31 +172,30 @@ int recvCommand(int connfd, struct Command *ptrcmd) {
   char buffer[BUFFER_SIZE];
   memset(buffer, 0, BUFFER_SIZE);
 
-  int r_recv = recv(fdlist->list[i], buffer, BUFFER_SIZE, MSG_DONTWAIT);
+  int r_recv = recv(connfd, buffer, BUFFER_SIZE, MSG_DONTWAIT);
   if (r_recv == -1) {
-    fdlist_del(&fdlist, fdlist->list[i]);
     printf("Error recv(): %s(%d), timeout.\n", strerror(errno), errno);
-    return FAIL;
+    return connfd;
   } else if (r_recv == 0){
-    fdlist_del(&fdlist, fdlist->list[i]);
     printf("Error recv(): %s(%d), client disconnect.\n", strerror(errno), errno);
-    return FAIL;
+    return connfd;
   } else {
     printf("Recieve command: %s", buffer);
 
     // parse command
     command_parse(ptrcmd, buffer);
 
-    return rc;
+    return SUCC;
   }
 }
 
 
 void *p_executeCommand(void *arg) {
-  struct Command cmd = *(struct Command *)arg[0];
-  struct int connfd = *(int *)arg[1];
+  // a dirty way to pass arg and decode arg
+  int connfd = *((int *)(arg));
+  struct Command cmd = *((struct Command *)(arg + sizeof(int)));
 
-  for (int i = 0; i < strlen(cmdlist); i++) {
+  for (int i = 0; i < CMD_NUM; i++) {
     if (cmdlist[i] == cmd.name) {
       if (execlist[i](1, cmd.arg, connfd) == FAIL) {
         printf("Error %s(): %s(%d).\n", cmdlist[i], strerror(errno), errno);

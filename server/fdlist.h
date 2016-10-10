@@ -11,7 +11,7 @@ struct FdList {
   size_t size;
   int list[FD_SETSIZE];
   int state[FD_SETSIZE];
-}
+};
 
 // init
 void fdlist_init(struct FdList *fdlist);

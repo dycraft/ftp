@@ -15,6 +15,8 @@
 #define CMD_QUIT  7
 #define CMD_ABOR  8
 
+#define CMD_NUM   9
+
 
 // struct Command and methods
 #define ARG_MAX 3
@@ -30,18 +32,9 @@ void command_parse(struct Command *cmd, char *buf);
 
 
 // cmdlist: cmd_name array
-extern char *cmdlist[] = {
-  "USER",
-  "PASS",
-  "PORT",
-  "PASV",
-  "RETR",
-  "STOR",
-  "SYST",
-  "TYPE",
-  "QUIT",
-  "ABOR"
-};
+extern char *cmdlist[];
+// execlist: function array
+extern int (*execlist[])();
 
 /* cmd_functions */
 
@@ -51,12 +44,6 @@ int cmd_pass(int argc, char *argv[], int connfd);
 /* common function in cmd_function */
 
 // check the amount of command's arguments
-void checkArg(int argc, int c, char format[]);
-
-// execlist: function array
-extern void *execlist[] = {
-  &cmd_user,
-  &cmd_pass
-}
+int checkArg(int argc, int c, char format[]);
 
 #endif

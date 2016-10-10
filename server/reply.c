@@ -52,7 +52,7 @@ void reply_init() {
 // send() with reply code
 int response(int sockfd, int rc) {
   int rc_n = htonl(rc);
-  printf("Send reply code: %d", rc);
+  printf("Send: %s", reply[rc]);
 
   if (send(sockfd, &rc_n, sizeof(rc_n), 0) == -1) {
     printf("Error send(): %s(%d)\r\n", strerror(errno), errno);

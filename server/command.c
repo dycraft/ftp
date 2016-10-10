@@ -1,6 +1,26 @@
 #include "command.h"
 #include "reply.h"
 
+/* extern global variables init */
+
+char *cmdlist[] = {
+  "USER",
+  "PASS",
+  "PORT",
+  "PASV",
+  "RETR",
+  "STOR",
+  "SYST",
+  "TYPE",
+  "QUIT",
+  "ABOR"
+};
+
+int (*execlist[])() = {
+  &cmd_user,
+  &cmd_pass
+};
+
 /* command's methods */
 
 void command_init(struct Command * cmd) {
@@ -30,7 +50,7 @@ void command_parse(struct Command * cmd, char *buf) {
 
 // check => false:response(RC_SYNTAX_ERR_error)
 //          true :response(rc_cmd_ok)
-void checkArg(int argc, int c, char format[]) {
+int checkArg(int argc, int c, char format[]) {
   if (argc != c) {
     printf("Syntax error. Input as\n\t%s", format);
     return false;
@@ -43,12 +63,12 @@ void checkArg(int argc, int c, char format[]) {
 
 // USER
 int cmd_user(int argc, char *argv[], int connfd) {
-  if (!ckeckArg(argc, 1, "USER [username]")) {
+  if (!checkArg(argc, 1, "USER [username]")) {
     response(connfd, RC_SYNTAX_ERR);
     return FAIL;
   }
 
-  if (argv[0] != "anonymous") {
+  if (strcmp(argv[0], "anonymous") == 0) {
     response(connfd, RC_ARG_ERR);
     return FAIL;
   }
