@@ -38,10 +38,10 @@ void command_parse(struct Command * cmd, char *buf) {
   int i = 0;
   cmd->name = strtok(s, delim);
   while ((p = strtok(NULL, delim))) {
-    cmd->arg[i] = p;
+    cmd->argvv[i] = p;
     i++;
   }
-  cmd->argc = i;
+  cmd->argvc = i;
 }
 
 
@@ -83,9 +83,8 @@ int cmd_user(int argc, char *argv[], int connfd) {
 
 // PASS
 int cmd_pass(int argc, char *argv[], int connfd) {
-  if (argc != 0) {
-    printf("Password error.");
-    response(connfd, RC_PASS_ERR);
+  if (!checkArg(argc, 1, "PASS [email_address]")) {
+    response(connfd, RC_SYNTAX_ERR);
     return FAIL;
   }
 

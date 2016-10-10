@@ -24,7 +24,7 @@
 struct Command {
   char *name;
   int argc;
-  char *arg[ARG_MAX];
+  char *argv[ARG_MAX];
 };
 
 void command_init(struct Command *cmd);

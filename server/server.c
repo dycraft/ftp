@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < fdlist.size; i++) {
       if (FD_ISSET(fdlist.list[i], &readfd)) {
         struct Command cmd;
-        memset(&cmd, 0, sizeof(cmd));
+        command_init(&cmd);
         int r_del = recvCommand(fdlist.list[i], &cmd);
         if (r_del != SUCC) {
           fdlist_del(&fdlist, r_del);
@@ -236,7 +236,7 @@ void *p_executeCommand(void *arg) {
 
   for (int i = 0; i < CMD_NUM; i++) {
     if (cmdlist[i] == cmd.name) {
-      if (execlist[i](1, cmd.arg, connfd) == FAIL) {
+      if (execlist[i](, cmd.argv, connfd) == FAIL) {
         printf("Error %s(): %s(%d).\n", cmdlist[i], strerror(errno), errno);
       }
       return NULL;
