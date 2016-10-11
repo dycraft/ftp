@@ -1,8 +1,12 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#include "../server/common.h"
+#include "common.h"
 
-int readCommand(char *buf, int size, struct Command* ptrcmd);
+int connectAddress(char *hostname, char *servname);
+
+int recvReply(int connfd);
+
+int readCommand(char *buf, int size);
 
 #endif
