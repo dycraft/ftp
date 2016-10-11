@@ -13,20 +13,20 @@ int main(int argc, char *argv[]) {
   // check command line arguments
   if (handleCliArg(argc, argv) == FAIL) {
     printf("Parameters Error. Input as:\n./ftpserver [-port PORT] [-root DIR]\n");
-    return 0;
+    return 1;
   }
 
   // reply.h
   reply_init();
-  printf("0");
+
   // createa passive socket
   int listenfd;
   if ((listenfd = createSocket(port)) == -1) {
     printf("Error createSocket(): %s(%d)\n", strerror(errno), errno);
-    exit(1);
+    return 1;
   }
 
-  printf("Server start at port: %d, waiting for client...", port);
+  printf("Server start at port: %d, waiting for client...\n", port);
 
   struct timeval timeout;
   timeout.tv_sec = 0;
@@ -41,23 +41,24 @@ int main(int argc, char *argv[]) {
     FD_ZERO(&readfd);
     FD_SET(listenfd, &readfd); // add the first: listenfd
     fdlist_poll(&fdlist, &readfd); // add the rest
-
+    
     if (select(fdlist_max(&fdlist) + 1, &readfd, NULL, NULL, &timeout) <= 0) {
       continue;
     }
-    printf("1");
+
     // accept connection from client
     int connfd;
     if (FD_ISSET(listenfd, &readfd)) {
       connfd = acceptSocket(listenfd);
       if (connfd < 0) {
         printf("Error acceptSocket(): %s(%d)\n", strerror(errno), errno);
+        close(listenfd);
+        return 1;
       }
 
+      printf("Server accept client's connection.");
       fdlist_add(&fdlist, connfd);
       response(connfd, RC_NEW_USER);
-
-      printf("Server accept client's connection.");
     }
 
     //parse command
@@ -69,7 +70,7 @@ int main(int argc, char *argv[]) {
         if (r_del != SUCC) {
           fdlist_del(&fdlist, r_del);
         }
-        printf("2");
+
         // exec cmd in pthread
         pthread_t tid;
         void *arg[] = { &(fdlist.list[i]), &cmd };
@@ -84,7 +85,7 @@ int main(int argc, char *argv[]) {
 
   close(listenfd);
 
-  printf("Server closed.");
+  printf("Server closed.\n");
 
   return 0;
 }
@@ -93,7 +94,7 @@ int handleCliArg(int argc, char *argv[]) {
   if ((argc != 1) && (argc != 3) && (argc != 5)) {
     return FAIL;
   }
-  printf("succ-cli");
+
   int n_root = 0;
   int n_port = 0;
 
