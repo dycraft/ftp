@@ -1,13 +1,10 @@
 #include "client.h"
 #include "reply.h"
 
-//int port;
-int root;
-
 int main(int argc, char* argv[]) {
 
-  char *hostname = "localhost";
-  char *servname = "21";
+  char *hostname = "127.0.0.1";
+  char *servname = argv[1];
 
   // reply.h
   reply_init();
@@ -43,7 +40,7 @@ int main(int argc, char* argv[]) {
     while (true) {
       char buffer[BUFFER_SIZE];
       // read command
-      if (readCmd(buffer, BUFFER_SIZE) == FAIL) {
+      if (readCommand(buffer, BUFFER_SIZE) == FAIL) {
         printf("Error *readcmd(): %s(%d)\n", strerror(errno), errno);
         continue;
       }
@@ -69,7 +66,7 @@ int connectAddress(char *hostname, char *servname) {
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
 
-  if (getaddrinfo(host, port, &hints, &res0) == -1) {
+  if (getaddrinfo(NULL, servname, &hints, &res0) == -1) {
     printf("Error getaddrinfo(): %s(%d)\n", strerror(errno), errno);
     return FAIL;
   }
@@ -79,7 +76,7 @@ int connectAddress(char *hostname, char *servname) {
   struct addrinfo *res = res0;
   for (res = res0; res; res = res->ai_next) {
     // socket()
-    connfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+    connfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
     if (connfd == -1) {
       printf("Fail in socket() at res loop: %s(%d)\n", strerror(errno), errno);
       continue;
@@ -87,12 +84,13 @@ int connectAddress(char *hostname, char *servname) {
 
     // connnect()
     if (connect(connfd, res->ai_addr, res->ai_addrlen) < 0) {
-      printf("Error connect() in res loop: %s(%d)\n", strerror(errno), errno);
+      printf("Fail in connect() in res loop: %s(%d)\n", strerror(errno), errno);
       close(connfd);
       connfd = FAIL;
       continue;
     } else {
       // if success
+      printf("Connect server successfully.\n");
       break;
     }
   }
@@ -103,7 +101,7 @@ int connectAddress(char *hostname, char *servname) {
 
 int recvReply(int connfd) {
   int rc = 0;
-	if (recv(sock_control, &rc, sizeof(rc), 0) < 0) {
+	if (recv(connfd, &rc, sizeof(rc), 0) < 0) {
 		printf("Error recv(rc) from server: %s(%d)\n", strerror(errno), errno);
 		return FAIL;
 	}

@@ -27,7 +27,4 @@
 #define DEFAULT_PORT  21
 #define DEFAULT_ROOT  "/tmp"
 
-extern int port;
-extern char *root;
-
 #endif
