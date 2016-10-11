@@ -38,10 +38,10 @@ void command_parse(struct Command * cmd, char *buf) {
   int i = 0;
   cmd->name = strtok(s, delim);
   while ((p = strtok(NULL, delim))) {
-    cmd->argvv[i] = p;
+    cmd->argv[i] = p;
     i++;
   }
-  cmd->argvc = i;
+  cmd->argc = i;
 }
 
 

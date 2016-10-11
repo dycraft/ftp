@@ -12,13 +12,13 @@ int main(int argc, char *argv[]) {
 
   // check command line arguments
   if (handleCliArg(argc, argv) == FAIL) {
-    printf("Parameters Error. Input as\n\t./ftpserver [-port PORT] [-root DIR]\n");
+    printf("Parameters Error. Input as:\n./ftpserver [-port PORT] [-root DIR]\n");
     return 0;
   }
 
   // reply.h
   reply_init();
-
+  printf("0");
   // createa passive socket
   int listenfd;
   if ((listenfd = createSocket(port)) == -1) {
@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
     if (select(fdlist_max(&fdlist) + 1, &readfd, NULL, NULL, &timeout) <= 0) {
       continue;
     }
-
+    printf("1");
     // accept connection from client
     int connfd;
     if (FD_ISSET(listenfd, &readfd)) {
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
         if (r_del != SUCC) {
           fdlist_del(&fdlist, r_del);
         }
-
+        printf("2");
         // exec cmd in pthread
         pthread_t tid;
         void *arg[] = { &(fdlist.list[i]), &cmd };
@@ -93,7 +93,7 @@ int handleCliArg(int argc, char *argv[]) {
   if ((argc != 1) && (argc != 3) && (argc != 5)) {
     return FAIL;
   }
-
+  printf("succ-cli");
   int n_root = 0;
   int n_port = 0;
 
@@ -236,7 +236,7 @@ void *p_executeCommand(void *arg) {
 
   for (int i = 0; i < CMD_NUM; i++) {
     if (cmdlist[i] == cmd.name) {
-      if (execlist[i](, cmd.argv, connfd) == FAIL) {
+      if (execlist[i](cmd.argc, cmd.argv, connfd) == FAIL) {
         printf("Error %s(): %s(%d).\n", cmdlist[i], strerror(errno), errno);
       }
       return NULL;
