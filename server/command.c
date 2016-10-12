@@ -82,7 +82,9 @@ int cmd_user(int argc, char *argv[], int connfd) {
   }
 
   if (strcmp(argv[0], "anonymous") != 0) {
-    response(connfd, RC_ARG_ERR, "Username error, no permission.");
+    char buf[BUFFER_SIZE];
+    sprintf(buf, "Username error, user:%s has no permission.", argv[0]);
+    response(connfd, RC_ARG_ERR, buf);
     return FAIL;
   }
 
@@ -95,12 +97,55 @@ int cmd_user(int argc, char *argv[], int connfd) {
 // PASS
 int cmd_pass(int argc, char *argv[], int connfd) {
   if (!checkArg(argc, 1, "PASS [email_address]")) {
-    response(connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'PASS [email_address]'");
+    response(connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'PASS [email_address]'.");
     return FAIL;
   }
 
   // login successfully
   response(connfd, RC_LOGIN, "Login successfully, welcome.");
+
+  return SUCC;
+}
+
+// SYST
+int cmd_syst(int argc, char *argv[], int connfd) {
+  if (!checkArg(argc, 0, "SYST")) {
+    response(connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'SYST'.");
+    return FAIL;
+  }
+
+  response(connfd, RC_LOGIN, "UNIX Type: L8.");
+
+  return SUCC;
+}
+
+// TYPE
+int cmd_type(int argc, char *argv[], int connfd) {
+  if (!checkArg(argc, 1, "TYPE [type]")) {
+    response(connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'TYPE [type_num]'.");
+    return FAIL;
+  }
+
+  if (strcmp(argv[0], "I") != 0) {
+    char buf[BUFFER_SIZE];
+    sprintf(buf, "Type error, not found type: %s.", argv[0]);
+    response(connfd, RC_ARG_ERR, buf);
+    return FAIL;
+  }
+
+  // username pass
+  response(connfd, RC_CMD_OK, "Type set to I.");
+
+  return SUCC;
+}
+
+int cmd_quit(int argc, char *argv[], int connfd) {
+  if (!checkArg(argc, 1, "QUIT")) {
+    response(connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'QUIT'.");
+    return FAIL;
+  }
+
+  response(connfd, RC_LOGOUT, "User log out.");
 
   return SUCC;
 }

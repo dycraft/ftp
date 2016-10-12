@@ -51,6 +51,9 @@ extern char *root;
 #define RC_NEED_PASS  331
 #define RC_PASS_ERR 530
 #define RC_LOGIN  230
+#define RC_LOGOUT 221
+
+#define RC_SYST 215
 /* --- --- */
 
 #endif

@@ -39,6 +39,9 @@ extern int (*execlist[])();
 
 int cmd_user(int argc, char *argv[], int connfd);
 int cmd_pass(int argc, char *argv[], int connfd);
+int cmd_syst(int argc, char *argv[], int connfd);
+int cmd_type(int argc, char *argv[], int connfd);
+int cmd_quit(int argc, char *argv[], int connfd);
 
 
 int response(int sockfd, int rc, const char *reply);
