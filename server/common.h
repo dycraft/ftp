@@ -20,12 +20,20 @@
 #include <fcntl.h>
 #include <pthread.h>
 
+#ifndef max
+#define max(a,b)  (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a,b)  (((a) < (b)) ? (a) : (b))
+#endif
+
 #define true 1
 #define false 0
 #define SUCC 0
 #define FAIL -1
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 2048
 
 #define DEFAULT_PORT  21
 #define DEFAULT_ROOT  "/tmp"

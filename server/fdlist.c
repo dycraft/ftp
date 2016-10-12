@@ -30,7 +30,7 @@ void fdlist_poll(struct FdList *fdlist, struct fd_set *sockfd) {
 
 //
 int fdlist_isfull(struct FdList *fdlist) {
-  return (fdlist->size < FD_SETSIZE);
+  return (fdlist->size >= FD_SETSIZE);
 }
 
 //
@@ -46,21 +46,20 @@ int fdlist_isset(struct FdList *fdlist, int sockfd) {
 // isfull & isset => add
 int fdlist_add(struct FdList *fdlist, int sockfd) {
   if (fdlist_isfull(fdlist)) {
-    return false;
+    return FAIL;
   }
   if (fdlist_isset(fdlist, sockfd)) {
-    return false;
+    return FAIL;
   }
-  fdlist->list[fdlist->size++] = sockfd;
-  return true;
+  fdlist->list[fdlist->size] = sockfd;
+  fdlist->size++;
+  return SUCC;
 }
 
 // close => remove
 int fdlist_del(struct FdList *fdlist, int sockfd) {
   for (int i = 0; i < fdlist->size; i++) {
     if (fdlist->list[i] == sockfd) {
-      close(sockfd);
-
       fdlist->size -= 1;
       fdlist->list[i] = fdlist->list[fdlist->size];
       memset(fdlist->list + fdlist->size, 0, sizeof(int));

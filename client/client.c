@@ -3,53 +3,38 @@
 
 int main(int argc, char* argv[]) {
 
-  char *hostname = "127.0.0.1";
-  char *servname = argv[1];
+  char *host = "127.0.0.1";
+  char *port = argv[1];
 
   // reply.h
   reply_init();
 
   // create socket
-  int connfd = connectAddress(hostname, servname);
+  int connfd = connectSocket(host, atoi(port));
   if (connfd == FAIL) {
     printf("Error *connectAddress(): %s(%d)\n", strerror(errno), errno);
-    return 0;
+    return 1;
   }
 
-  printf("connected to %s.\n", hostname);
+  printf("connected to %s.\n", host);
 
-  // fork a child process to recv response
-  int pid = fork();
-  if (pid < 0) {
-    printf("Error fork(): %s(%d)\n", strerror(errno), errno);
-    close(connfd);
-    return 0;
-  } else if (pid == 0) {
-    // child: recieve response (rc) from server
+  showReply(connfd);
 
-    while (true) {
-      int rc = recvReply(connfd);
-      if (rc == FAIL) {
-        continue;
-      }
-      printf("%s", reply[rc]);
+  while (true) {
+
+    char buffer[BUFFER_SIZE];
+    // read command
+    if (readCommand(buffer, BUFFER_SIZE) == FAIL) {
+      printf("Error *readcmd(): %s(%d)\n", strerror(errno), errno);
+      break;
     }
-  } else {
-    // parent: handle command
-
-    while (true) {
-      char buffer[BUFFER_SIZE];
-      // read command
-      if (readCommand(buffer, BUFFER_SIZE) == FAIL) {
-        printf("Error *readcmd(): %s(%d)\n", strerror(errno), errno);
-        continue;
-      }
-      // send command
-      if (send(connfd, buffer, strlen(buffer), 0) == FAIL) {
-        printf("Error send(cmd): %s(%d)\n", strerror(errno), errno);
-        break; // exit
-      }
+    // send command
+    if (send(connfd, buffer, strlen(buffer), 0) == FAIL) {
+      printf("Error send(cmd): %s(%d)\n", strerror(errno), errno);
+      break; // exit
     }
+    // recieve reply
+    showReply(connfd);
   }
 
   close(connfd);
@@ -99,13 +84,44 @@ int connectAddress(char *hostname, char *servname) {
   return connfd;
 }
 
+int connectSocket(char *host, int port) {
+
+  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd < 0) {
+		printf("Error socket(): %s(%d)\n", strerror(errno), errno);
+		return 1;
+	}
+
+  struct sockaddr_in addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(port);
+  addr.sin_addr.s_addr = inet_addr(host);
+
+  int connfd = connect(sockfd, (struct sockaddr *) &addr, sizeof(addr));
+	if (connfd < 0) {
+		printf("Error connect(): %s(%d)\n", strerror(errno), errno);
+		return FAIL;
+	}
+
+  return sockfd;
+}
+
 int recvReply(int connfd) {
-  int rc = 0;
+  int rc = FAIL;
 	if (recv(connfd, &rc, sizeof(rc), 0) < 0) {
 		printf("Error recv(rc) from server: %s(%d)\n", strerror(errno), errno);
 		return FAIL;
 	}
 	return ntohl(rc);
+}
+
+void showReply(int connfd) {
+  int rc = FAIL;
+  while (rc == FAIL) {
+    rc = recvReply(connfd);
+  }
+  printf("%s", reply[rc]);
 }
 
 

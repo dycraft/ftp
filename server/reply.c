@@ -55,7 +55,7 @@ int response(int sockfd, int rc) {
   printf("Send: %s", reply[rc]);
 
   if (send(sockfd, &rc_n, sizeof(rc_n), 0) == -1) {
-    printf("Error send(): %s(%d)\r\n", strerror(errno), errno);
+    printf("Error send(%d) to fd(%d): %s(%d)\n", rc, sockfd, strerror(errno), errno);
     return FAIL;
   }
   return SUCC;

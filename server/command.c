@@ -31,7 +31,7 @@ void command_parse(struct Command * cmd, char *buf) {
   // protect the buffer string
   char s[BUFFER_SIZE];
   strcpy(s, buf);
-
+  
   // strtok
   char *delim = " ";
   char *p;
@@ -68,12 +68,10 @@ int cmd_user(int argc, char *argv[], int connfd) {
     return FAIL;
   }
 
-  if (strcmp(argv[0], "anonymous") == 0) {
+  if (strcmp(argv[0], "anonymous") != 0) {
     response(connfd, RC_ARG_ERR);
     return FAIL;
   }
-
-  response(connfd, RC_CMD_OK);
 
   // username pass
   response(connfd, RC_NEED_PASS);
@@ -87,8 +85,6 @@ int cmd_pass(int argc, char *argv[], int connfd) {
     response(connfd, RC_SYNTAX_ERR);
     return FAIL;
   }
-
-  response(connfd, RC_CMD_OK);
 
   // login successfully
   response(connfd, RC_LOGIN);

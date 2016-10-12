@@ -8,6 +8,11 @@
 int port;
 char *root;
 
+struct threadArg {
+  int connfd;
+  struct Command *cmd;
+};
+
 int main(int argc, char *argv[]) {
 
   // check command line arguments
@@ -20,8 +25,8 @@ int main(int argc, char *argv[]) {
   reply_init();
 
   // createa passive socket
-  int listenfd;
-  if ((listenfd = createSocket(port)) == -1) {
+  int listenfd = createSocket(port);
+  if (listenfd == FAIL) {
     printf("Error createSocket(): %s(%d)\n", strerror(errno), errno);
     return 1;
   }
@@ -41,8 +46,9 @@ int main(int argc, char *argv[]) {
     FD_ZERO(&readfd);
     FD_SET(listenfd, &readfd); // add the first: listenfd
     fdlist_poll(&fdlist, &readfd); // add the rest
-    
-    if (select(fdlist_max(&fdlist) + 1, &readfd, NULL, NULL, &timeout) <= 0) {
+
+    int maxfd = max(fdlist_max(&fdlist), listenfd);
+    if (select(maxfd + 1, &readfd, NULL, NULL, &timeout) <= 0) {
       continue;
     }
 
@@ -56,8 +62,11 @@ int main(int argc, char *argv[]) {
         return 1;
       }
 
-      printf("Server accept client's connection.");
-      fdlist_add(&fdlist, connfd);
+      printf("Server accept client's connection.\n");
+      FD_SET(connfd, &readfd);
+      if (fdlist_add(&fdlist, connfd) == FAIL) {
+        printf("Error fdlist_add().\n");
+      }
       response(connfd, RC_NEW_USER);
     }
 
@@ -67,18 +76,21 @@ int main(int argc, char *argv[]) {
         struct Command cmd;
         command_init(&cmd);
         int r_del = recvCommand(fdlist.list[i], &cmd);
-        if (r_del != SUCC) {
-          fdlist_del(&fdlist, r_del);
+        if (r_del == FAIL) {
+          FD_CLR(fdlist.list[i], &readfd);
+          fdlist_del(&fdlist, fdlist.list[i]);
+          close(fdlist.list[i]);
         }
 
         // exec cmd in pthread
         pthread_t tid;
-        void *arg[] = { &(fdlist.list[i]), &cmd };
-        if (pthread_create(&tid, NULL, p_executeCommand, &arg) == 0) {
+        struct threadArg arg;
+        arg.connfd = fdlist.list[i];
+        arg.cmd = &cmd;
+        if (pthread_create(&tid, NULL, p_executeCommand, &arg) != 0) {
           printf("Error pthread_create(): %s(%d), command failed.\n", strerror(errno), errno);
+          return 1;
         }
-        FD_CLR(fdlist.list[i], &readfd);
-        fdlist_del(&fdlist, fdlist.list[i]);
       }
     }
   }
@@ -88,6 +100,26 @@ int main(int argc, char *argv[]) {
   printf("Server closed.\n");
 
   return 0;
+}
+
+void *p_executeCommand(void *arg) {
+  // a dirty way to pass arg and decode arg
+  int connfd = ((struct threadArg *)arg)->connfd;
+  struct Command *cmd = ((struct threadArg *)arg)->cmd;
+
+  for (int i = 0; i < CMD_NUM; i++) {
+    if (strcmp(cmdlist[i], cmd->name) == 0) {
+      if (execlist[i](cmd->argc, cmd->argv, connfd) == FAIL) {
+        printf("Error %s(%s).\n", cmdlist[i], cmd->argv[0]);
+      }
+      return NULL;
+    }
+  }
+
+  // command not implemented
+  response(connfd, RC_NO_IMP);
+
+  return NULL;
 }
 
 int handleCliArg(int argc, char *argv[]) {
@@ -212,40 +244,19 @@ int recvCommand(int connfd, struct Command *ptrcmd) {
   char buffer[BUFFER_SIZE];
   memset(buffer, 0, BUFFER_SIZE);
 
-  int r_recv = recv(connfd, buffer, BUFFER_SIZE, MSG_DONTWAIT);
+  int r_recv = recv(connfd, buffer, BUFFER_SIZE, 0);
   if (r_recv == -1) {
     printf("Error recv(): %s(%d), timeout.\n", strerror(errno), errno);
-    return connfd;
+    return FAIL;
   } else if (r_recv == 0){
     printf("Error recv(): %s(%d), client disconnect.\n", strerror(errno), errno);
-    return connfd;
+    return FAIL;
   } else {
-    printf("Recieve command: %s", buffer);
+    printf("Recieve command: %s\n", buffer);
 
     // parse command
     command_parse(ptrcmd, buffer);
 
     return SUCC;
   }
-}
-
-
-void *p_executeCommand(void *arg) {
-  // a dirty way to pass arg and decode arg
-  int connfd = *((int *)(arg));
-  struct Command cmd = *((struct Command *)(arg + sizeof(int)));
-
-  for (int i = 0; i < CMD_NUM; i++) {
-    if (cmdlist[i] == cmd.name) {
-      if (execlist[i](cmd.argc, cmd.argv, connfd) == FAIL) {
-        printf("Error %s(): %s(%d).\n", cmdlist[i], strerror(errno), errno);
-      }
-      return NULL;
-    }
-  }
-
-  // command not implemented
-  response(connfd, RC_NO_IMP);
-
-  return NULL;
 }
