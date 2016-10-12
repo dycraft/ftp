@@ -2,7 +2,6 @@
 #define COMMAND_H
 
 #include "common.h"
-#include "reply.h"
 
 // index of command
 #define CMD_USER  0
@@ -40,6 +39,9 @@ extern int (*execlist[])();
 
 int cmd_user(int argc, char *argv[], int connfd);
 int cmd_pass(int argc, char *argv[], int connfd);
+
+
+int response(int sockfd, int rc, const char *reply);
 
 /* common function in cmd_function */
 

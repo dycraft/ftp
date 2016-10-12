@@ -22,7 +22,7 @@
 #define SUCC 0
 #define FAIL -1
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 512
 
 #define DEFAULT_PORT  21
 #define DEFAULT_ROOT  "/tmp"

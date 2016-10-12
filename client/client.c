@@ -1,13 +1,9 @@
 #include "client.h"
-#include "reply.h"
 
 int main(int argc, char* argv[]) {
 
   char *host = "127.0.0.1";
   char *port = argv[1];
-
-  // reply.h
-  reply_init();
 
   // create socket
   int connfd = connectSocket(host, atoi(port));
@@ -23,6 +19,7 @@ int main(int argc, char* argv[]) {
   while (true) {
 
     char buffer[BUFFER_SIZE];
+    memset(buffer, 0, BUFFER_SIZE);
     // read command
     if (readCommand(buffer, BUFFER_SIZE) == FAIL) {
       printf("Error *readcmd(): %s(%d)\n", strerror(errno), errno);
@@ -107,21 +104,22 @@ int connectSocket(char *host, int port) {
   return sockfd;
 }
 
-int recvReply(int connfd) {
-  int rc = FAIL;
-	if (recv(connfd, &rc, sizeof(rc), 0) < 0) {
-		printf("Error recv(rc) from server: %s(%d)\n", strerror(errno), errno);
+int recvReply(char *buffer, int connfd) {
+	if (recv(connfd, buffer, BUFFER_SIZE, 0) < 0) {
+		printf("Error recv(rc) from server(%d): %s(%d)\n", connfd, strerror(errno), errno);
 		return FAIL;
 	}
-	return ntohl(rc);
+	return SUCC;
 }
 
 void showReply(int connfd) {
-  int rc = FAIL;
-  while (rc == FAIL) {
-    rc = recvReply(connfd);
+  char buf[BUFFER_SIZE];
+  memset(buf, 0, BUFFER_SIZE);
+  int r = FAIL;
+  while (r == FAIL) {
+    r = recvReply(buf, connfd);
   }
-  printf("%s", reply[rc]);
+  printf("%s", buf);
 }
 
 

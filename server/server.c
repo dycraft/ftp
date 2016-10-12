@@ -1,9 +1,5 @@
 #include "server.h"
-#include "reply.h"
 #include "fdlist.h"
-
-// fdlist del删除的时候需要同时调用FD_CLR？
-// cmd 发送过来后，有且仅有一个response?
 
 int port;
 char *root;
@@ -20,9 +16,6 @@ int main(int argc, char *argv[]) {
     printf("Parameters Error. Input as:\n./ftpserver [-port PORT] [-root DIR]\n");
     return 1;
   }
-
-  // reply.h
-  reply_init();
 
   // createa passive socket
   int listenfd = createSocket(port);
@@ -52,7 +45,7 @@ int main(int argc, char *argv[]) {
       continue;
     }
 
-    // accept connection from client
+    // accept connection from a new client
     int connfd;
     if (FD_ISSET(listenfd, &readfd)) {
       connfd = acceptSocket(listenfd);
@@ -62,12 +55,11 @@ int main(int argc, char *argv[]) {
         return 1;
       }
 
-      printf("Server accept client's connection.\n");
-      FD_SET(connfd, &readfd);
+      printf("Server accept client(%d)'s connection.\n", connfd);
       if (fdlist_add(&fdlist, connfd) == FAIL) {
         printf("Error fdlist_add().\n");
       }
-      response(connfd, RC_NEW_USER);
+      response(connfd, RC_NEW_USER, "Server ready for new user.");
     }
 
     //parse command
@@ -75,21 +67,25 @@ int main(int argc, char *argv[]) {
       if (FD_ISSET(fdlist.list[i], &readfd)) {
         struct Command cmd;
         command_init(&cmd);
-        int r_del = recvCommand(fdlist.list[i], &cmd);
-        if (r_del == FAIL) {
+        int r = recvCommand(fdlist.list[i], &cmd);
+        if (r == 0) {
+          // disconnect
           FD_CLR(fdlist.list[i], &readfd);
           fdlist_del(&fdlist, fdlist.list[i]);
           close(fdlist.list[i]);
-        }
-
-        // exec cmd in pthread
-        pthread_t tid;
-        struct threadArg arg;
-        arg.connfd = fdlist.list[i];
-        arg.cmd = &cmd;
-        if (pthread_create(&tid, NULL, p_executeCommand, &arg) != 0) {
-          printf("Error pthread_create(): %s(%d), command failed.\n", strerror(errno), errno);
-          return 1;
+        } else if (r == -1){
+          // timeout
+          continue;
+        } else {
+          // exec cmd in pthread
+          pthread_t tid;
+          struct threadArg arg;
+          arg.connfd = fdlist.list[i];
+          arg.cmd = &cmd;
+          if (pthread_create(&tid, NULL, p_executeCommand, &arg) != 0) {
+            printf("Error pthread_create(): %s(%d), command failed.\n", strerror(errno), errno);
+            return 1;
+          }
         }
       }
     }
@@ -103,7 +99,6 @@ int main(int argc, char *argv[]) {
 }
 
 void *p_executeCommand(void *arg) {
-  // a dirty way to pass arg and decode arg
   int connfd = ((struct threadArg *)arg)->connfd;
   struct Command *cmd = ((struct threadArg *)arg)->cmd;
 
@@ -116,8 +111,8 @@ void *p_executeCommand(void *arg) {
     }
   }
 
-  // command not implemented
-  response(connfd, RC_NO_IMP);
+  // invalid command
+  response(connfd, RC_NO_IMP, "?Invalid Command.");
 
   return NULL;
 }
@@ -244,19 +239,19 @@ int recvCommand(int connfd, struct Command *ptrcmd) {
   char buffer[BUFFER_SIZE];
   memset(buffer, 0, BUFFER_SIZE);
 
-  int r_recv = recv(connfd, buffer, BUFFER_SIZE, 0);
+  int r_recv = recv(connfd, buffer, BUFFER_SIZE, MSG_DONTWAIT);
   if (r_recv == -1) {
     printf("Error recv(): %s(%d), timeout.\n", strerror(errno), errno);
     return FAIL;
   } else if (r_recv == 0){
     printf("Error recv(): %s(%d), client disconnect.\n", strerror(errno), errno);
-    return FAIL;
+    return 0;
   } else {
     printf("Recieve command: %s\n", buffer);
 
     // parse command
     command_parse(ptrcmd, buffer);
 
-    return SUCC;
+    return r_recv;
   }
 }

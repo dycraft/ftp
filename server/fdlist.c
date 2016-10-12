@@ -2,11 +2,6 @@
 
 // set to 0
 void fdlist_init(struct FdList *fdlist) {
-  /*fdlist->size = 0;
-  for (int i = 0; i < FD_SETSIZE; i++) {
-    fdlist->list[i] = 0;
-    fdlist->state[i] = 0;
-  }*/
   memset(fdlist, 0, sizeof(*fdlist));
 }
 

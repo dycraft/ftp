@@ -6,7 +6,7 @@
 int connectSocket(char *host, int port);
 int connectAddress(char *hostname, char *servname);
 
-int recvReply(int connfd);
+int recvReply(char *buffer, int connfd);
 void showReply(int connfd);
 
 int readCommand(char *buf, int size);
