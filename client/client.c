@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
       break;
     }
     // send command
-    if (send(connfd, buffer, strlen(buffer), 0) == FAIL) {
+    if (send(connfd, buffer, strlen(buffer), 0) == -1) {
       printf("Error send(cmd): %s(%d)\n", strerror(errno), errno);
       break; // exit
     }

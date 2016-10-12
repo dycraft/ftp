@@ -6,15 +6,11 @@
 // index of command
 #define CMD_USER  0
 #define CMD_PASS  1
-#define CMD_PORT  2
-#define CMD_PASV  3
-#define CMD_RETR  4
-#define CMD_SYST  5
-#define CMD_TYPE  6
-#define CMD_QUIT  7
-#define CMD_ABOR  8
+#define CMD_SYST  2
+#define CMD_TYPE  3
+#define CMD_QUIT  4
 
-#define CMD_NUM   9
+#define CMD_NUM   5
 
 
 // struct Command and methods

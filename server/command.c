@@ -5,19 +5,17 @@
 char *cmdlist[] = {
   "USER",
   "PASS",
-  "PORT",
-  "PASV",
-  "RETR",
-  "STOR",
   "SYST",
   "TYPE",
-  "QUIT",
-  "ABOR"
+  "QUIT"
 };
 
 int (*execlist[])() = {
   &cmd_user,
-  &cmd_pass
+  &cmd_pass,
+  &cmd_syst,
+  &cmd_type,
+  &cmd_quit
 };
 
 /* command's methods */
@@ -32,7 +30,6 @@ void command_parse(struct Command * cmd, char *buf) {
   memset(s, 0, BUFFER_SIZE);
   strcpy(s, buf);
 
-
   // strtok
   char *delim = " ";
   char *p;
@@ -44,7 +41,6 @@ void command_parse(struct Command * cmd, char *buf) {
   }
   cmd->argc = i;
 }
-
 
 
 /* common function in cmd_function */
@@ -83,6 +79,7 @@ int cmd_user(int argc, char *argv[], int connfd) {
 
   if (strcmp(argv[0], "anonymous") != 0) {
     char buf[BUFFER_SIZE];
+    memset(buf, 0, BUFFER_SIZE);
     sprintf(buf, "Username error, user:%s has no permission.", argv[0]);
     response(connfd, RC_ARG_ERR, buf);
     return FAIL;
@@ -114,7 +111,7 @@ int cmd_syst(int argc, char *argv[], int connfd) {
     return FAIL;
   }
 
-  response(connfd, RC_LOGIN, "UNIX Type: L8.");
+  response(connfd, RC_SYST, "UNIX Type: L8.");
 
   return SUCC;
 }
@@ -128,6 +125,7 @@ int cmd_type(int argc, char *argv[], int connfd) {
 
   if (strcmp(argv[0], "I") != 0) {
     char buf[BUFFER_SIZE];
+    memset(buf, 0, BUFFER_SIZE);
     sprintf(buf, "Type error, not found type: %s.", argv[0]);
     response(connfd, RC_ARG_ERR, buf);
     return FAIL;
@@ -140,12 +138,12 @@ int cmd_type(int argc, char *argv[], int connfd) {
 }
 
 int cmd_quit(int argc, char *argv[], int connfd) {
-  if (!checkArg(argc, 1, "QUIT")) {
+  if (!checkArg(argc, 0, "QUIT")) {
     response(connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'QUIT'.");
     return FAIL;
   }
 
-  response(connfd, RC_LOGOUT, "User log out.");
+  response(connfd, RC_LOGOUT, "User log out and quit the client.");
 
   return SUCC;
 }

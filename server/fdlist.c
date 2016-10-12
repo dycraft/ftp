@@ -5,7 +5,7 @@ void fdlist_init(struct FdList *fdlist) {
   memset(fdlist, 0, sizeof(*fdlist));
 }
 
-// traverse the list to find max
+//
 int fdlist_max(struct FdList *fdlist) {
   int max = -1;
   for (int i = 0; i < fdlist->size; i++) {
@@ -16,7 +16,7 @@ int fdlist_max(struct FdList *fdlist) {
   return max;
 }
 
-// traverse and FD_SET
+// FD_SET
 void fdlist_poll(struct FdList *fdlist, struct fd_set *sockfd) {
   for (int i = 0; i < fdlist->size; i++) {
     FD_SET(fdlist->list[i], sockfd);
@@ -47,6 +47,7 @@ int fdlist_add(struct FdList *fdlist, int sockfd) {
     return FAIL;
   }
   fdlist->list[fdlist->size] = sockfd;
+  fdlist->mode[fdlist->size] = MODE_GUEST;
   fdlist->size++;
   return SUCC;
 }
@@ -57,7 +58,9 @@ int fdlist_del(struct FdList *fdlist, int sockfd) {
     if (fdlist->list[i] == sockfd) {
       fdlist->size -= 1;
       fdlist->list[i] = fdlist->list[fdlist->size];
-      memset(fdlist->list + fdlist->size, 0, sizeof(int));
+      fdlist->mode[i] = fdlist->mode[fdlist->size];
+      fdlist->list[i] = 0;
+      fdlist->mode[i] = 0;
       return true;
     }
   }

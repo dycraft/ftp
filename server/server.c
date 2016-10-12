@@ -68,6 +68,7 @@ int main(int argc, char *argv[]) {
         struct Command cmd;
         command_init(&cmd);
         int r = recvCommand(fdlist.list[i], &cmd);
+        printf("星:%s\n", cmd.name);
         if (r == 0) {
           // disconnect
           FD_CLR(fdlist.list[i], &readfd);
@@ -105,7 +106,7 @@ void *p_executeCommand(void *arg) {
   for (int i = 0; i < CMD_NUM; i++) {
     if (strcmp(cmdlist[i], cmd->name) == 0) {
       if (execlist[i](cmd->argc, cmd->argv, connfd) == FAIL) {
-        printf("Error %s(%s).\n", cmdlist[i], cmd->argv[0]);
+        printf("Error %s().\n", cmdlist[i]);
       }
       return NULL;
     }
@@ -251,7 +252,7 @@ int recvCommand(int connfd, struct Command *ptrcmd) {
 
     // parse command
     command_parse(ptrcmd, buffer);
-
+    printf("允:%s\n", ptrcmd->name);
     return r_recv;
   }
 }

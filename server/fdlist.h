@@ -3,14 +3,18 @@
 
 #include "common.h"
 
+#define MODE_GUEST  1617
+#define MODE_PASS 1819
+#define MODE_LOGIN  1111
 #define MODE_PASV 1213
 #define MODE_PORT 1415
+#define MODE_QUIT 2222
 
 // description of fdset
 struct FdList {
   size_t size;
   int list[FD_SETSIZE];
-  int state[FD_SETSIZE];
+  int mode[FD_SETSIZE];
 };
 
 // init
