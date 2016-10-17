@@ -114,3 +114,26 @@ int response(int sockfd, int rc, const char *reply) {
     return SUCC;
   }
 }
+
+// get server's ip
+int getip(char *ip) {
+  struct ifaddrs *ifAddrStruct = NULL;
+  void *tmpAddrPtr = NULL;
+  getifaddrs(&ifAddrStruct);
+
+  while (ifAddrStruct != NULL) {
+    if (ifAddrStruct->ifa_addr->sa_family == AF_INET) {
+      char mask[INET_ADDRSTRLEN];
+      void* mask_ptr = &((struct sockaddr_in *)ifAddrStruct->ifa_netmask)->sin_addr;
+      inet_ntop(AF_INET, mask_ptr, mask, INET_ADDRSTRLEN);
+      if (strcmp(mask, "255.0.0.0") != 0) {
+        tmpAddrPtr = &((struct sockaddr_in *)ifAddrStruct->ifa_addr)->sin_addr;
+        inet_ntop(AF_INET, tmpAddrPtr, ip, INET_ADDRSTRLEN);
+        return SUCC;
+      }
+    }
+    ifAddrStruct = ifAddrStruct->ifa_next;
+  }
+
+  return FAIL;
+}

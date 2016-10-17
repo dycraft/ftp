@@ -19,4 +19,7 @@ int recvCommand(int connfd, struct Command *ptrcmd);
 // send reply with code
 int response(int sockfd, int rc, const char *reply);
 
+// get server's ip
+int getip(char *ip);
+
 #endif

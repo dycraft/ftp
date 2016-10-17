@@ -11,8 +11,9 @@
 #define CMD_TYPE  3
 #define CMD_QUIT  4
 #define CMD_PORT  5
+#define CMD_PASV  6
 
-#define CMD_NUM   6
+#define CMD_NUM   7
 
 
 // struct Command and methods
@@ -45,6 +46,9 @@ int cmd_pasv(char *arg, struct Socketfd *fd);
 
 /* common function in cmd_function */
 
-int address_parse(char *addr, int *port, char *buf);
+int randPort(int seed);
+
+int decodeAddress(char *addr, int *port, char *buf);
+int encodeAddress(char *buf, char *addr, int port);
 
 #endif

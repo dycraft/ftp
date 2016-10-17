@@ -15,6 +15,7 @@ struct Socketfd {
   int connfd;
   int mode;
   struct sockaddr_in addr;
+  int transfd;
 };
 
 // init

@@ -7,6 +7,7 @@ void socketfd_init(struct Socketfd *fd) {
 void socketfd_copy(struct Socketfd *dstfd, struct Socketfd *srcfd) {
   dstfd->connfd = srcfd->connfd;
   dstfd->mode = srcfd->mode;
+  dstfd->transfd = srcfd->transfd;
   socketfd_init(dstfd);
   dstfd->addr.sin_family = srcfd->addr.sin_family;
   dstfd->addr.sin_port = srcfd->addr.sin_port;

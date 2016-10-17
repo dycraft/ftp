@@ -9,7 +9,8 @@ char *cmdlist[] = {
   "SYST",
   "TYPE",
   "QUIT",
-  "PORT"
+  "PORT",
+  "PASV"
 };
 
 int (*execlist[])() = {
@@ -18,7 +19,8 @@ int (*execlist[])() = {
   &cmd_syst,
   &cmd_type,
   &cmd_quit,
-  &cmd_port
+  &cmd_port,
+  &cmd_pasv
 };
 
 /* command's methods */
@@ -127,7 +129,7 @@ int cmd_port(char *arg, struct Socketfd *fd) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'PORT h1,h2,h3,h4,p1,p2'");
     return FAIL;
   } else {
-    if (address_parse(address, &port, arg) == FAIL) {
+    if (decodeAddress(address, &port, arg) == FAIL) {
       response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'PORT h1,h2,h3,h4,p1,p2', p1,p2 = (0~255).");
       return FAIL;
     }
@@ -147,9 +149,39 @@ int cmd_port(char *arg, struct Socketfd *fd) {
   return SUCC;
 }
 
+int cmd_pasv(char *arg, struct Socketfd *fd) {
+  if (strlen(arg)) {
+    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'QUIT'.");
+    return FAIL;
+  }
+
+  int port = randPort(fd->connfd);
+  fd->transfd = createSocket(port);
+
+  char buf[BUFFER_SIZE];
+  char ip[16];
+  if (getip(ip) == FAIL) {
+    printf("Error *getip().");
+  }
+  if (encodeAddress(buf, ip, port) == FAIL) {
+    printf("Error *encodeAddress().\n");
+    response(fd->connfd, RC_EXEC_ERR, "Command execute error, input again.");
+    return FAIL;
+  }
+
+  response(fd->connfd, RC_PASV_OK, buf);
+
+  return SUCC;
+}
+
 /* common function in cmd_function */
 
-int address_parse(char *addr, int *port, char *buf) {
+int randPort(int seed) {
+  srand(seed);
+  return rand() % (65536 - 20000) + 20000;
+}
+
+int decodeAddress(char *addr, int *port, char *buf) {
   int h1, h2, h3, h4, p1, p2;
   int num = sscanf(buf, "%d,%d,%d,%d,%d,%d", &h1, &h2, &h3, &h4, &p1, &p2);
   if (num != 6) {
@@ -165,6 +197,21 @@ int address_parse(char *addr, int *port, char *buf) {
 
   // addr
   sprintf(addr, "%d.%d.%d.%d", h1, h2, h3, h4);
+
+  return SUCC;
+}
+
+int encodeAddress(char *buf, char *addr, int port) {
+  int h1, h2, h3, h4, p1, p2;
+  int num = sscanf(addr, "%d.%d.%d.%d", &h1, &h2, &h3, &h4);
+  if (num != 4) {
+    return FAIL;
+  }
+
+  p1 = port / 256;
+  p2 = port % 256;
+
+  sprintf(buf, "Entering Passive Mode. (%d,%d,%d,%d,%d,%d)", h1, h2, h3, h4, p1, p2);
 
   return SUCC;
 }
