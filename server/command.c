@@ -23,8 +23,8 @@ int (*execlist[])() = {
 void command_parse(struct Command * cmd, char *buf) {
   // strtok
   char *delim = " ";
-  cmd->name = strtok(buf, delim);
-  cmd->arg = strtok(NULL, delim);
+  strcpy(cmd->name, strtok(buf, delim));
+  strcpy(cmd->arg, strtok(NULL, delim));
 }
 
 

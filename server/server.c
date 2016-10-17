@@ -84,7 +84,7 @@ int main(int argc, char *arg[]) {
           arg.connfd = fdlist.list[i];
           arg.cmd = &cmd;
 
-          if (pthread_create(&tid, NULL, p_executeCommand, &arg) != 0) {
+          if (pthread_create(&tid, NULL, p_executeCommand, (void *)&arg) != 0) {
             printf("Error pthread_create(): %s(%d), command failed.\n", strerror(errno), errno);
             return 1;
           }
@@ -103,7 +103,7 @@ int main(int argc, char *arg[]) {
 void *p_executeCommand(void *arg) {
   struct Command *cmd = ((struct threadArg *)arg)->cmd;
   int connfd = ((struct threadArg *)arg)->connfd;
-  printf("BB:%s\n", cmd->name);
+
   for (int i = 0; i < CMD_NUM; i++) {
     if (strcmp(cmdlist[i], cmd->name) == 0) {
       if (execlist[i](cmd->arg, connfd) == FAIL) {

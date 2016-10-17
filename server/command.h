@@ -18,8 +18,8 @@
 #define ARG_LEN 32
 
 struct Command {
-  char *name;
-  char *arg;
+  char name[NAME_LEN];
+  char arg[ARG_LEN];
 };
 
 void command_parse(struct Command *cmd, char *buf);
