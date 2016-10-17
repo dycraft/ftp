@@ -12,7 +12,7 @@ void *p_executeCommand(void *arg);
 
 struct threadArg {
   struct Command *cmd;
-  int connfd;
+  struct Socketfd *fd;
 };
 
 
@@ -72,15 +72,15 @@ int main(int argc, char *arg[]) {
 
     //parse command
     for (int i = 0; i < fdlist.size; i++) {
-      if (FD_ISSET(fdlist.list[i], &readfd)) {
+      if (FD_ISSET(fdlist.list[i].connfd, &readfd)) {
         struct Command cmd;
         memset(&cmd, 0, sizeof(struct Command));
-        int r = recvCommand(fdlist.list[i], &cmd);
+        int r = recvCommand(fdlist.list[i].connfd, &cmd);
         if (r == 0) {
           // disconnect
-          FD_CLR(fdlist.list[i], &readfd);
-          fdlist_del(&fdlist, fdlist.list[i]);
-          close(fdlist.list[i]);
+          FD_CLR(fdlist.list[i].connfd, &readfd);
+          fdlist_del(&fdlist, fdlist.list[i].connfd);
+          close(fdlist.list[i].connfd);
         } else if (r == -1){
           // timeout
           continue;
@@ -89,7 +89,7 @@ int main(int argc, char *arg[]) {
           pthread_t tid;
           struct threadArg arg;
           memset(&arg, 0, sizeof(arg));
-          arg.connfd = fdlist.list[i];
+          arg.fd = &fdlist.list[i];
           arg.cmd = &cmd;
 
           if (pthread_create(&tid, NULL, p_executeCommand, (void *)&arg) != 0) {
@@ -112,11 +112,11 @@ int main(int argc, char *arg[]) {
 
 void *p_executeCommand(void *arg) {
   struct Command *cmd = ((struct threadArg *)arg)->cmd;
-  int connfd = ((struct threadArg *)arg)->connfd;
+  struct Socketfd *fd = ((struct threadArg *)arg)->fd;
 
   for (int i = 0; i < CMD_NUM; i++) {
     if (strcmp(cmdlist[i], cmd->name) == 0) {
-      if (execlist[i](cmd->arg, connfd) == FAIL) {
+      if (execlist[i](cmd->arg, fd) == FAIL) {
         printf("Error %s().\n", cmdlist[i]);
       }
       return NULL;
@@ -124,7 +124,7 @@ void *p_executeCommand(void *arg) {
   }
 
   // invalid command
-  response(connfd, RC_NO_IMP, "?Invalid Command.");
+  response(fd->connfd, RC_NO_IMP, "?Invalid Command.");
 
   return NULL;
 }

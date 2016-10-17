@@ -2,6 +2,7 @@
 #define COMMAND_H
 
 #include "common.h"
+#include "fdlist.h"
 
 // index of command
 #define CMD_USER  0
@@ -9,8 +10,9 @@
 #define CMD_SYST  2
 #define CMD_TYPE  3
 #define CMD_QUIT  4
+#define CMD_PORT  5
 
-#define CMD_NUM   5
+#define CMD_NUM   6
 
 
 // struct Command and methods
@@ -32,13 +34,13 @@ extern int (*execlist[])();
 
 /* cmd_functions */
 
-int cmd_user(char *arg, int connfd);
-int cmd_pass(char *arg, int connfd);
-int cmd_syst(char *arg, int connfd);
-int cmd_type(char *arg, int connfd);
-int cmd_quit(char *arg, int connfd);
-int cmd_port(char *arg, int connfd);
-int cmd_pasv(char *arg, int connfd);
+int cmd_user(char *arg, struct Socketfd *fd);
+int cmd_pass(char *arg, struct Socketfd *fd);
+int cmd_syst(char *arg, struct Socketfd *fd);
+int cmd_type(char *arg, struct Socketfd *fd);
+int cmd_quit(char *arg, struct Socketfd *fd);
+int cmd_port(char *arg, struct Socketfd *fd);
+int cmd_pasv(char *arg, struct Socketfd *fd);
 
 
 /* common function in cmd_function */
