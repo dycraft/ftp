@@ -10,17 +10,23 @@
 #define MODE_PORT 1415
 #define MODE_QUIT 2222
 
-// description of fdset
+// description of socket
 struct Socketfd {
   int connfd;
   int mode;
-  struct sockaddr_in *addr;
-}
+  struct sockaddr_in addr;
+};
 
+// init
+void socketfd_init(struct Socketfd *fd);
+
+// copy
+void socketfd_copy(struct Socketfd *dstfd, struct Socketfd *srcfd);
+
+// description of fdset
 struct FdList {
   size_t size;
-  int list[FD_SETSIZE];
-  int mode[FD_SETSIZE];
+  struct Socketfd list[FD_SETSIZE];
 };
 
 // init
