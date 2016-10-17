@@ -10,7 +10,9 @@ char *cmdlist[] = {
   "TYPE",
   "QUIT",
   "PORT",
-  "PASV"
+  "PASV",
+  "LIST",
+  "RETR"
 };
 
 int (*execlist[])() = {
@@ -20,7 +22,9 @@ int (*execlist[])() = {
   &cmd_type,
   &cmd_quit,
   &cmd_port,
-  &cmd_pasv
+  &cmd_pasv,
+  &cmd_list,
+  &cmd_retr
 };
 
 /* command's methods */
@@ -111,6 +115,7 @@ int cmd_type(char *arg, struct Socketfd *fd) {
   return SUCC;
 }
 
+// QUIT
 int cmd_quit(char *arg, struct Socketfd *fd) {
   if (strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'QUIT'.");
@@ -122,6 +127,7 @@ int cmd_quit(char *arg, struct Socketfd *fd) {
   return SUCC;
 }
 
+// PORT
 int cmd_port(char *arg, struct Socketfd *fd) {
   char address[16];
   int port;
@@ -149,9 +155,10 @@ int cmd_port(char *arg, struct Socketfd *fd) {
   return SUCC;
 }
 
+// PASV
 int cmd_pasv(char *arg, struct Socketfd *fd) {
   if (strlen(arg)) {
-    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'QUIT'.");
+    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'PASV'.");
     return FAIL;
   }
 
@@ -170,6 +177,50 @@ int cmd_pasv(char *arg, struct Socketfd *fd) {
   }
 
   response(fd->connfd, RC_PASV_OK, buf);
+
+  return SUCC;
+}
+
+int cmd_list(char *arg, struct Socketfd *fd) {
+  if (strlen(arg)) {
+    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'LIST'.");
+    return FAIL;
+  }
+
+  if (system("ls -l | tail -n+2 > tmp") < 0) {
+    printf("Error system(ls).\n");
+    return FAIL;
+  }
+
+  FILE *file = fopen("tmp", "r");
+  if (!file) {
+    printf("Error fopen('tmp').\n");
+		return FAIL;
+	}
+
+  fseek(file, 0, SEEK_SET);
+  char buf[BUFFER_SIZE];
+  memset(buf, 0, BUFFER_SIZE);
+  fread(buf, BUFFER_SIZE, sizeof(char), file);
+
+  fclose(file);
+
+  if (system("rm tmp") < 0) {
+    printf("Error system(rm).\n");
+    return FAIL;
+  }
+
+  response(fd->connfd, 200, buf);
+
+  return SUCC;
+}
+
+// RETR
+int cmd_retr(char *arg, struct Socketfd *fd) {
+  if (!strlen(arg)) {
+    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'RETR [filename]'.");
+    return FAIL;
+  }
 
   return SUCC;
 }

@@ -12,8 +12,11 @@
 #define CMD_QUIT  4
 #define CMD_PORT  5
 #define CMD_PASV  6
+#define CMD_LIST  7
+#define CMD_RETR  8
+#define CMD_STOR  9
 
-#define CMD_NUM   7
+#define CMD_NUM   9
 
 
 // struct Command and methods
@@ -41,8 +44,9 @@ int cmd_syst(char *arg, struct Socketfd *fd);
 int cmd_type(char *arg, struct Socketfd *fd);
 int cmd_quit(char *arg, struct Socketfd *fd);
 int cmd_port(char *arg, struct Socketfd *fd);
+int cmd_list(char *arg, struct Socketfd *fd);
 int cmd_pasv(char *arg, struct Socketfd *fd);
-
+int cmd_retr(char *arg, struct Socketfd *fd);
 
 /* common function in cmd_function */
 
