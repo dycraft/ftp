@@ -1,9 +1,9 @@
 #include "client.h"
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* arg[]) {
 
   char *host = "127.0.0.1";
-  char *port = argv[1];
+  char *port = arg[1];
 
   // create socket
   int connfd = connectSocket(host, atoi(port));

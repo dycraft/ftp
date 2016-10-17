@@ -5,7 +5,7 @@
 #include "command.h"
 
 // check command line arguments
-int handleCliArg(int argc, char *argv[]);
+int handleCliArg(int argc, char *arg[]);
 
 // create a listen socketfd
 int createSocket(int port);

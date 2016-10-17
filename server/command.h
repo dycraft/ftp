@@ -14,15 +14,14 @@
 
 
 // struct Command and methods
-#define ARG_MAX 3
+#define NAME_LEN  5
+#define ARG_LEN 32
 
 struct Command {
   char *name;
-  int argc;
-  char *argv[ARG_MAX];
+  char *arg;
 };
 
-void command_init(struct Command *cmd);
 void command_parse(struct Command *cmd, char *buf);
 
 
@@ -33,18 +32,16 @@ extern int (*execlist[])();
 
 /* cmd_functions */
 
-int cmd_user(int argc, char *argv[], int connfd);
-int cmd_pass(int argc, char *argv[], int connfd);
-int cmd_syst(int argc, char *argv[], int connfd);
-int cmd_type(int argc, char *argv[], int connfd);
-int cmd_quit(int argc, char *argv[], int connfd);
+int cmd_user(char *arg, int connfd);
+int cmd_pass(char *arg, int connfd);
+int cmd_syst(char *arg, int connfd);
+int cmd_type(char *arg, int connfd);
+int cmd_quit(char *arg, int connfd);
 
 
 int response(int sockfd, int rc, const char *reply);
 
 /* common function in cmd_function */
 
-// check the amount of command's arguments
-int checkArg(int argc, int c, char format[]);
 
 #endif

@@ -20,39 +20,17 @@ int (*execlist[])() = {
 
 /* command's methods */
 
-void command_init(struct Command * cmd) {
-  memset(cmd, 0, sizeof(*cmd));
-}
-
 void command_parse(struct Command * cmd, char *buf) {
-  // protect the buffer string
-  char s[BUFFER_SIZE];
-  memset(s, 0, BUFFER_SIZE);
-  strcpy(s, buf);
-
   // strtok
   char *delim = " ";
-  char *p;
-  int i = 0;
-  cmd->name = strtok(s, delim);
-  while ((p = strtok(NULL, delim))) {
-    cmd->argv[i] = p;
-    i++;
-  }
-  cmd->argc = i;
+  cmd->name = strtok(buf, delim);
+  cmd->arg = strtok(NULL, delim);
 }
 
 
 /* common function in cmd_function */
 
-// check => false:Syntax error
-int checkArg(int argc, int c, char format[]) {
-  if (argc != c) {
-    return false;
-  } else {
-    return true;
-  }
-}
+
 
 /* cmd_functions */
 
@@ -71,16 +49,16 @@ int response(int sockfd, int rc, const char *reply) {
 }
 
 // USER
-int cmd_user(int argc, char *argv[], int connfd) {
-  if (!checkArg(argc, 1, "USER [username]")) {
+int cmd_user(char *arg, int connfd) {
+  if (!arg) {
     response(connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'USER [username]'.");
     return FAIL;
   }
 
-  if (strcmp(argv[0], "anonymous") != 0) {
+  if (strcmp(arg, "anonymous") != 0) {
     char buf[BUFFER_SIZE];
     memset(buf, 0, BUFFER_SIZE);
-    sprintf(buf, "Username error, user:%s has no permission.", argv[0]);
+    sprintf(buf, "Username error, user:%s has no permission.", arg);
     response(connfd, RC_ARG_ERR, buf);
     return FAIL;
   }
@@ -92,8 +70,8 @@ int cmd_user(int argc, char *argv[], int connfd) {
 }
 
 // PASS
-int cmd_pass(int argc, char *argv[], int connfd) {
-  if (!checkArg(argc, 1, "PASS [email_address]")) {
+int cmd_pass(char *arg, int connfd) {
+  if (!arg) {
     response(connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'PASS [email_address]'.");
     return FAIL;
   }
@@ -105,8 +83,8 @@ int cmd_pass(int argc, char *argv[], int connfd) {
 }
 
 // SYST
-int cmd_syst(int argc, char *argv[], int connfd) {
-  if (!checkArg(argc, 0, "SYST")) {
+int cmd_syst(char *arg, int connfd) {
+  if (!arg) {
     response(connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'SYST'.");
     return FAIL;
   }
@@ -117,16 +95,16 @@ int cmd_syst(int argc, char *argv[], int connfd) {
 }
 
 // TYPE
-int cmd_type(int argc, char *argv[], int connfd) {
-  if (!checkArg(argc, 1, "TYPE [type]")) {
+int cmd_type(char *arg, int connfd) {
+  if (!arg) {
     response(connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'TYPE [type_num]'.");
     return FAIL;
   }
 
-  if (strcmp(argv[0], "I") != 0) {
+  if (strcmp(arg, "I") != 0) {
     char buf[BUFFER_SIZE];
     memset(buf, 0, BUFFER_SIZE);
-    sprintf(buf, "Type error, not found type: %s.", argv[0]);
+    sprintf(buf, "Type error, not found type: %s.", arg);
     response(connfd, RC_ARG_ERR, buf);
     return FAIL;
   }
@@ -137,8 +115,8 @@ int cmd_type(int argc, char *argv[], int connfd) {
   return SUCC;
 }
 
-int cmd_quit(int argc, char *argv[], int connfd) {
-  if (!checkArg(argc, 0, "QUIT")) {
+int cmd_quit(char *arg, int connfd) {
+  if (!arg) {
     response(connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'QUIT'.");
     return FAIL;
   }

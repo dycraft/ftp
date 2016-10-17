@@ -5,14 +5,14 @@ int port;
 char *root;
 
 struct threadArg {
-  int connfd;
   struct Command *cmd;
+  int connfd;
 };
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *arg[]) {
 
   // check command line arguments
-  if (handleCliArg(argc, argv) == FAIL) {
+  if (handleCliArg(argc, arg) == FAIL) {
     printf("Parameters Error. Input as:\n./ftpserver [-port PORT] [-root DIR]\n");
     return 1;
   }
@@ -66,9 +66,8 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < fdlist.size; i++) {
       if (FD_ISSET(fdlist.list[i], &readfd)) {
         struct Command cmd;
-        command_init(&cmd);
+        memset(&cmd, 0, sizeof(struct Command));
         int r = recvCommand(fdlist.list[i], &cmd);
-        printf("星:%s\n", cmd.name);
         if (r == 0) {
           // disconnect
           FD_CLR(fdlist.list[i], &readfd);
@@ -81,8 +80,10 @@ int main(int argc, char *argv[]) {
           // exec cmd in pthread
           pthread_t tid;
           struct threadArg arg;
+          memset(&arg, 0, sizeof(arg));
           arg.connfd = fdlist.list[i];
           arg.cmd = &cmd;
+
           if (pthread_create(&tid, NULL, p_executeCommand, &arg) != 0) {
             printf("Error pthread_create(): %s(%d), command failed.\n", strerror(errno), errno);
             return 1;
@@ -100,12 +101,12 @@ int main(int argc, char *argv[]) {
 }
 
 void *p_executeCommand(void *arg) {
-  int connfd = ((struct threadArg *)arg)->connfd;
   struct Command *cmd = ((struct threadArg *)arg)->cmd;
+  int connfd = ((struct threadArg *)arg)->connfd;
 
   for (int i = 0; i < CMD_NUM; i++) {
     if (strcmp(cmdlist[i], cmd->name) == 0) {
-      if (execlist[i](cmd->argc, cmd->argv, connfd) == FAIL) {
+      if (execlist[i](cmd->arg, connfd) == FAIL) {
         printf("Error %s().\n", cmdlist[i]);
       }
       return NULL;
@@ -118,7 +119,7 @@ void *p_executeCommand(void *arg) {
   return NULL;
 }
 
-int handleCliArg(int argc, char *argv[]) {
+int handleCliArg(int argc, char *arg[]) {
   if ((argc != 1) && (argc != 3) && (argc != 5)) {
     return FAIL;
   }
@@ -127,10 +128,10 @@ int handleCliArg(int argc, char *argv[]) {
   int n_port = 0;
 
   for (int i = 1; i <= argc-2; i += 2) {
-    if (strcmp(argv[i], "-port") == 0) {
+    if (strcmp(arg[i], "-port") == 0) {
       n_port = i + 1;
     }
-    if (strcmp(argv[i], "-root") == 0) {
+    if (strcmp(arg[i], "-root") == 0) {
       n_root = i + 1;
     }
   }
@@ -138,13 +139,13 @@ int handleCliArg(int argc, char *argv[]) {
   if (n_port == 0) {
     port = DEFAULT_PORT;
   } else {
-    port = atoi(argv[n_port]);
+    port = atoi(arg[n_port]);
   }
 
   if (n_root == 0) {
     root = DEFAULT_ROOT;
   } else {
-    root = argv[n_root];
+    root = arg[n_root];
   }
 
   return SUCC;
@@ -240,7 +241,7 @@ int recvCommand(int connfd, struct Command *ptrcmd) {
   char buffer[BUFFER_SIZE];
   memset(buffer, 0, BUFFER_SIZE);
 
-  int r_recv = recv(connfd, buffer, BUFFER_SIZE, MSG_DONTWAIT);
+  int r_recv = recv(connfd, buffer, BUFFER_SIZE, 0);
   if (r_recv == -1) {
     printf("Error recv(): %s(%d), timeout.\n", strerror(errno), errno);
     return FAIL;
@@ -249,10 +250,9 @@ int recvCommand(int connfd, struct Command *ptrcmd) {
     return 0;
   } else {
     printf("Recieve command: %s\n", buffer);
-
     // parse command
     command_parse(ptrcmd, buffer);
-    printf("允:%s\n", ptrcmd->name);
+
     return r_recv;
   }
 }

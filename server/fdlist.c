@@ -59,8 +59,8 @@ int fdlist_del(struct FdList *fdlist, int sockfd) {
       fdlist->size -= 1;
       fdlist->list[i] = fdlist->list[fdlist->size];
       fdlist->mode[i] = fdlist->mode[fdlist->size];
-      fdlist->list[i] = 0;
-      fdlist->mode[i] = 0;
+      fdlist->list[fdlist->size] = 0;
+      fdlist->mode[fdlist->size] = 0;
       return true;
     }
   }
