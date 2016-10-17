@@ -103,7 +103,7 @@ int main(int argc, char *arg[]) {
 void *p_executeCommand(void *arg) {
   struct Command *cmd = ((struct threadArg *)arg)->cmd;
   int connfd = ((struct threadArg *)arg)->connfd;
-
+  printf("BB:%s\n", cmd->name);
   for (int i = 0; i < CMD_NUM; i++) {
     if (strcmp(cmdlist[i], cmd->name) == 0) {
       if (execlist[i](cmd->arg, connfd) == FAIL) {
