@@ -37,6 +37,8 @@ int cmd_pass(char *arg, int connfd);
 int cmd_syst(char *arg, int connfd);
 int cmd_type(char *arg, int connfd);
 int cmd_quit(char *arg, int connfd);
+int cmd_port(char *arg, int connfd);
+int cmd_pasv(char *arg, int connfd);
 
 
 int response(int sockfd, int rc, const char *reply);

@@ -23,8 +23,13 @@ int (*execlist[])() = {
 void command_parse(struct Command * cmd, char *buf) {
   // strtok
   char *delim = " ";
-  strcpy(cmd->name, strtok(buf, delim));
-  strcpy(cmd->arg, strtok(NULL, delim));
+  char *p;
+  if ((p = strtok(buf, delim))) {
+    strcpy(cmd->name, p);
+  }
+  if ((p = strtok(NULL, delim))) {
+    strcpy(cmd->arg, p);
+  }
 }
 
 
@@ -50,7 +55,7 @@ int response(int sockfd, int rc, const char *reply) {
 
 // USER
 int cmd_user(char *arg, int connfd) {
-  if (!arg) {
+  if (!strlen(arg)) {
     response(connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'USER [username]'.");
     return FAIL;
   }
@@ -71,7 +76,7 @@ int cmd_user(char *arg, int connfd) {
 
 // PASS
 int cmd_pass(char *arg, int connfd) {
-  if (!arg) {
+  if (!strlen(arg)) {
     response(connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'PASS [email_address]'.");
     return FAIL;
   }
@@ -84,7 +89,7 @@ int cmd_pass(char *arg, int connfd) {
 
 // SYST
 int cmd_syst(char *arg, int connfd) {
-  if (!arg) {
+  if (strlen(arg)) {
     response(connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'SYST'.");
     return FAIL;
   }
@@ -96,7 +101,7 @@ int cmd_syst(char *arg, int connfd) {
 
 // TYPE
 int cmd_type(char *arg, int connfd) {
-  if (!arg) {
+  if (!strlen(arg)) {
     response(connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'TYPE [type_num]'.");
     return FAIL;
   }
@@ -116,7 +121,7 @@ int cmd_type(char *arg, int connfd) {
 }
 
 int cmd_quit(char *arg, int connfd) {
-  if (!arg) {
+  if (strlen(arg)) {
     response(connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'QUIT'.");
     return FAIL;
   }
