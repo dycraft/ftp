@@ -41,8 +41,6 @@ int cmd_port(char *arg, int connfd);
 int cmd_pasv(char *arg, int connfd);
 
 
-int response(int sockfd, int rc, const char *reply);
-
 /* common function in cmd_function */
 
 

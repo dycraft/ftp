@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-c -Wall
 LDFLAGS=-lm
-SOURCES=server.c fdlist.c command.c
+SOURCES=main.c server.c fdlist.c command.c
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=ftpserver
 

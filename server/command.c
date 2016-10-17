@@ -1,4 +1,5 @@
 #include "command.h"
+#include "server.h"
 
 /* extern global variables init */
 
@@ -38,20 +39,6 @@ void command_parse(struct Command * cmd, char *buf) {
 
 
 /* cmd_functions */
-
-int response(int sockfd, int rc, const char *reply) {
-  char buf[BUFFER_SIZE];
-  memset(buf, 0, BUFFER_SIZE);
-  sprintf(buf, "%d %s\r\n", rc, reply);
-
-  if (send(sockfd, buf, BUFFER_SIZE, 0) == -1) {
-    printf("Error send(%d) to fd(%d): %s(%d)\n", rc, sockfd, strerror(errno), errno);
-    return FAIL;
-  } else {
-    printf("Send to fd(%d): %s", sockfd, buf);
-    return SUCC;
-  }
-}
 
 // USER
 int cmd_user(char *arg, int connfd) {

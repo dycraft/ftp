@@ -4,9 +4,6 @@
 #include "common.h"
 #include "command.h"
 
-// check command line arguments
-int handleCliArg(int argc, char *arg[]);
-
 // create a listen socketfd
 int createSocket(int port);
 
@@ -19,7 +16,7 @@ int connectSocket(int port, char *host);
 // return 0 if success, otherwise connfd to be deleted in fdlist
 int recvCommand(int connfd, struct Command *ptrcmd);
 
-// mutithread to execute command
-void *p_executeCommand(void *arg);
+// send reply with code
+int response(int sockfd, int rc, const char *reply);
 
 #endif
