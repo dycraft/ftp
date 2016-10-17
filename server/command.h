@@ -43,5 +43,6 @@ int cmd_pasv(char *arg, int connfd);
 
 /* common function in cmd_function */
 
+int address_parse(char *addr, int *port, char *buf);
 
 #endif

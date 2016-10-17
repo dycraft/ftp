@@ -11,6 +11,12 @@
 #define MODE_QUIT 2222
 
 // description of fdset
+struct Socketfd {
+  int connfd;
+  int mode;
+  struct sockaddr_in *addr;
+}
+
 struct FdList {
   size_t size;
   int list[FD_SETSIZE];
