@@ -31,22 +31,15 @@ int (*execlist[])() = {
 
 /* command's methods */
 
-void command_parse(struct Command * cmd, char *buf) {
-  // strtok
-  char *delim = " ";
-  char *p;
-  if ((p = strtok(buf, delim))) {
-    strcpy(cmd->name, p);
-  }
-  if ((p = strtok(NULL, delim))) {
-    strcpy(cmd->arg, p);
+int command_parse(struct Command * cmd, char *buf) {
+  memset(cmd, 0, sizeof(struct Command));
+  sscanf(buf, "%s %s", cmd->name, cmd->arg);
+  if ((strlen(cmd->name) >= NAME_LEN) || (strlen(cmd->arg) >= ARG_LEN)) {
+    return FAIL;
+  } else {
+    return SUCC;
   }
 }
-
-
-/* common function in cmd_function */
-
-
 
 /* cmd_functions */
 
@@ -192,30 +185,34 @@ int cmd_list(char *arg, struct Socketfd *fd) {
     return FAIL;
   }
 
-  if (system("ls -l | tail -n+2 > tmp") < 0) {
+  // put info into file
+  if (system("ls -l | tail -n+2 > .ls") < 0) {
     printf("Error system(ls).\n");
     return FAIL;
   }
 
-  FILE *file = fopen("tmp", "r");
+  // fopen
+  FILE *file = fopen(".ls", "r");
   if (!file) {
-    printf("Error fopen('tmp').\n");
+    printf("Error fopen('.ls').\n");
 		return FAIL;
 	}
 
-  fseek(file, 0, SEEK_SET);
-  char buf[BUFFER_SIZE];
-  memset(buf, 0, BUFFER_SIZE);
-  fread(buf, BUFFER_SIZE, sizeof(char), file);
-
-  fclose(file);
-
-  if (system("rm tmp") < 0) {
-    printf("Error system(rm).\n");
+  char buf[DATA_SIZE];
+  memset(buf, 0, DATA_SIZE);
+  if (fread(buf, DATA_SIZE-1, DATA_ITEM, file) == FAIL) {
+    printf("Error fread().\n");
     return FAIL;
   }
 
-  response(fd->connfd, 200, buf);
+  response(fd->connfd, RC_CMD_OK, buf);
+
+  fclose(file);
+
+  if (system("rm .ls") < 0) {
+    printf("Error system(rm).\n");
+    return FAIL;
+  }
 
   return SUCC;
 }
@@ -228,20 +225,7 @@ int cmd_retr(char *arg, struct Socketfd *fd) {
   }
 
   // create data connection
-  int datafd;
-  if (fd->mode == MODE_PORT) {
-    datafd = createPortSocket(&(fd->addr));
-    if (datafd == FAIL) {
-      printf("Error createPortSocket(): %s(%d)\n", strerror(errno), errno);
-    }
-  } else if (fd->mode == MODE_PASV) {
-    datafd = createPasvSocket(fd->transfd);
-    if (datafd == FAIL) {
-      printf("Error createPasvSocket(): %s(%d)\n", strerror(errno), errno);
-    }
-  } else {
-    datafd = FAIL;
-  }
+  int datafd = createDataSocket(fd);
   if (datafd == FAIL) {
     response(fd->connfd, RC_NO_CNN, "No TCP connection was established.");
     return FAIL;
@@ -256,6 +240,10 @@ int cmd_retr(char *arg, struct Socketfd *fd) {
     printf("Error *sendFile(%d, %s).", fd->transfd, buf);
   }
 
+  // init data connection
+  memset(&(fd->addr), 0, sizeof(fd->addr));
+  fd->transfd = 0;
+
   return SUCC;
 }
 
@@ -266,20 +254,7 @@ int cmd_stor(char *arg, struct Socketfd *fd) {
   }
 
   // create data connection
-  int datafd;
-  if (fd->mode == MODE_PORT) {
-    datafd = createPortSocket(&(fd->addr));
-    if (datafd == FAIL) {
-      printf("Error createPortSocket(): %s(%d)\n", strerror(errno), errno);
-    }
-  } else if (fd->mode == MODE_PASV) {
-    datafd = createPasvSocket(fd->transfd);
-    if (datafd == FAIL) {
-      printf("Error createPasvSocket(): %s(%d)\n", strerror(errno), errno);
-    }
-  } else {
-    datafd = FAIL;
-  }
+  int datafd = createDataSocket(fd);
   if (datafd == FAIL) {
     response(fd->connfd, RC_NO_CNN, "No TCP connection was established.");
     return FAIL;
@@ -293,6 +268,10 @@ int cmd_stor(char *arg, struct Socketfd *fd) {
   if (recvFile(fd->transfd, fd->connfd, buf) == FAIL) {
     printf("Error *recvFile(%d, %s).", fd->transfd, buf);
   }
+
+  // init data connection
+  memset(&(fd->addr), 0, sizeof(fd->addr));
+  fd->transfd = 0;
 
   return SUCC;
 }

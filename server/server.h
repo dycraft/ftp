@@ -10,6 +10,7 @@ int createSocket(int port);
 int acceptSocket(int sockfd);
 
 // data connection
+int createDataSocket(struct Socketfd *fd);
 int createPortSocket(struct sockaddr_in *addr);
 int createPasvSocket(int listenfd);
 

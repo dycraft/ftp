@@ -6,7 +6,7 @@ OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=ftpserver
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $@ -lpthread
 
 .cpp.o:
 	$(CC) $(CFLAGS) $< -o $@ -lpthread

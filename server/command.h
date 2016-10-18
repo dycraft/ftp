@@ -28,7 +28,7 @@ struct Command {
   char arg[ARG_LEN];
 };
 
-void command_parse(struct Command *cmd, char *buf);
+int command_parse(struct Command *cmd, char *buf);
 
 
 // cmdlist: cmd_name array

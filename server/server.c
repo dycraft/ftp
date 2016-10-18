@@ -70,13 +70,36 @@ int recvCommand(int connfd, struct Command *ptrcmd) {
   } else {
     printf("Recieve command: %s\n", buffer);
     // parse command
-    command_parse(ptrcmd, buffer);
+    if (command_parse(ptrcmd, buffer) == FAIL) {
+      printf("Error *command_parse().\n");
+    }
 
     return r_recv;
   }
 }
 
 
+// port() -> | pasv() ->
+int createDataSocket(struct Socketfd *fd) {
+  int datafd;
+  if (fd->mode == MODE_PORT) {
+    datafd = createPortSocket(&(fd->addr));
+    if (datafd == FAIL) {
+      printf("Error createPortSocket(): %s(%d)\n", strerror(errno), errno);
+    }
+  } else if (fd->mode == MODE_PASV) {
+    datafd = createPasvSocket(fd->transfd);
+    if (datafd == FAIL) {
+      printf("Error createPasvSocket(): %s(%d)\n", strerror(errno), errno);
+    }
+  } else {
+    datafd = FAIL;
+  }
+
+  return datafd;
+}
+
+// socket() -> connect()
 int createPortSocket(struct sockaddr_in *addr) {
   int sockfd;
   sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -93,6 +116,7 @@ int createPortSocket(struct sockaddr_in *addr) {
   return sockfd;
 }
 
+// accept()
 int createPasvSocket(int listenfd) {
   return acceptSocket(listenfd);
 }
@@ -112,6 +136,7 @@ int sendFile(int datafd, int connfd, char *filename) {
   char buf[DATA_SIZE];
   int nread = -1;
   do {
+    memset(buf, 0, DATA_SIZE);
     nread = fread(buf, DATA_SIZE, DATA_ITEM, file);
     if (nread < 0) {
       printf("Error fread(): %s(%d)\n", strerror(errno), errno);
@@ -148,6 +173,7 @@ int recvFile(int datafd, int connfd, char *filename) {
   char buf[DATA_SIZE];
   int nwrite = -1;
   do {
+    memset(buf, 0, DATA_SIZE);
     if (recv(datafd, buf, DATA_SIZE, 0) < 0) {
       printf("Error recv(): %s(%d)\n", strerror(errno), errno);
       response(connfd, RC_NET_ERR, "Cannot accept data connection, connection closed.");
