@@ -16,7 +16,7 @@
 #define CMD_RETR  8
 #define CMD_STOR  9
 
-#define CMD_NUM   9
+#define CMD_NUM   10
 
 
 // struct Command and methods
@@ -47,6 +47,7 @@ int cmd_port(char *arg, struct Socketfd *fd);
 int cmd_list(char *arg, struct Socketfd *fd);
 int cmd_pasv(char *arg, struct Socketfd *fd);
 int cmd_retr(char *arg, struct Socketfd *fd);
+int cmd_stor(char *arg, struct Socketfd *fd);
 
 /* common function in cmd_function */
 

@@ -12,7 +12,8 @@ char *cmdlist[] = {
   "PORT",
   "PASV",
   "LIST",
-  "RETR"
+  "RETR",
+  "STOR"
 };
 
 int (*execlist[])() = {
@@ -24,7 +25,8 @@ int (*execlist[])() = {
   &cmd_port,
   &cmd_pasv,
   &cmd_list,
-  &cmd_retr
+  &cmd_retr,
+  &cmd_stor
 };
 
 /* command's methods */
@@ -149,6 +151,7 @@ int cmd_port(char *arg, struct Socketfd *fd) {
   fd->mode = MODE_PORT;
 
   char buf[BUFFER_SIZE];
+  memset(buf, 0, BUFFER_SIZE);
   sprintf(buf, "Convert to PORT mode successfully. (%s:%d)", address, port);
   response(fd->connfd, RC_CMD_OK, buf);
 
@@ -244,6 +247,52 @@ int cmd_retr(char *arg, struct Socketfd *fd) {
     return FAIL;
   }
 
+  // send file
+  char buf[BUFFER_SIZE];
+  memset(buf, 0, BUFFER_SIZE);
+  strcpy(buf, root);
+  strcat(buf, arg);
+  if (sendFile(fd->transfd, fd->connfd, buf) == FAIL) {
+    printf("Error *sendFile(%d, %s).", fd->transfd, buf);
+  }
+
+  return SUCC;
+}
+
+int cmd_stor(char *arg, struct Socketfd *fd) {
+  if (!strlen(arg)) {
+    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'STOR [filename]'.");
+    return FAIL;
+  }
+
+  // create data connection
+  int datafd;
+  if (fd->mode == MODE_PORT) {
+    datafd = createPortSocket(&(fd->addr));
+    if (datafd == FAIL) {
+      printf("Error createPortSocket(): %s(%d)\n", strerror(errno), errno);
+    }
+  } else if (fd->mode == MODE_PASV) {
+    datafd = createPasvSocket(fd->transfd);
+    if (datafd == FAIL) {
+      printf("Error createPasvSocket(): %s(%d)\n", strerror(errno), errno);
+    }
+  } else {
+    datafd = FAIL;
+  }
+  if (datafd == FAIL) {
+    response(fd->connfd, RC_NO_CNN, "No TCP connection was established.");
+    return FAIL;
+  }
+
+  // recv file
+  char buf[BUFFER_SIZE];
+  memset(buf, 0, BUFFER_SIZE);
+  strcpy(buf, root);
+  strcat(buf, arg);
+  if (recvFile(fd->transfd, fd->connfd, buf) == FAIL) {
+    printf("Error *recvFile(%d, %s).", fd->transfd, buf);
+  }
 
   return SUCC;
 }

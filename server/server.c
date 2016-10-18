@@ -111,11 +111,11 @@ int sendFile(int datafd, int connfd, char *filename) {
 
   char buf[DATA_SIZE];
   int nread = -1;
-  while (nread > 0) {
+  do {
     nread = fread(buf, DATA_SIZE, DATA_ITEM, file);
     if (nread < 0) {
       printf("Error fread(): %s(%d)\n", strerror(errno), errno);
-      response(connfd, RC_LOC_ERR, "Cannot read local data.");
+      response(connfd, RC_LOC_ERR, "Cannot read server's local data.");
       return FAIL;
     }
 
@@ -124,9 +124,45 @@ int sendFile(int datafd, int connfd, char *filename) {
       response(connfd, RC_NET_ERR, "Cannot open data connection, connection closed.");
       return FAIL;
     }
-  }
+  } while (nread > 0);
 
   response(connfd, RC_FILE_OK, "File transfer successfully.");
+
+  fclose(file);
+
+  return SUCC;
+}
+
+int recvFile(int datafd, int connfd, char *filename) {
+  FILE *file = NULL;
+
+  file = fopen(filename, "rb");
+  if(!file) {
+    printf("Error fopen(): %s(%d)\n", strerror(errno), errno);
+    response(connfd, RC_NO_FILE, "Not found this file or no permission to open.");
+    return FAIL;
+  }
+
+  response(connfd, RC_FILE_OK, "File is ready for recieving.");
+
+  char buf[DATA_SIZE];
+  int nwrite = -1;
+  do {
+    if (recv(datafd, buf, DATA_SIZE, 0) < 0) {
+      printf("Error recv(): %s(%d)\n", strerror(errno), errno);
+      response(connfd, RC_NET_ERR, "Cannot accept data connection, connection closed.");
+      return FAIL;
+    }
+
+    nwrite = fwrite(buf, DATA_SIZE, DATA_ITEM, file);
+    if (nwrite < 0) {
+      printf("Error fwrite(): %s(%d)\n", strerror(errno), errno);
+      response(connfd, RC_LOC_ERR, "Cannot write server's local data.");
+      return FAIL;
+    }
+  } while (nwrite > 0);
+
+  fclose(file);
 
   return SUCC;
 }

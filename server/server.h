@@ -15,6 +15,7 @@ int createPasvSocket(int listenfd);
 
 // data translation
 int sendFile(int datafd, int connfd, char *filename);
+int recvFile(int datafd, int connfd, char *filename);
 
 // return 0 if success, otherwise connfd to be deleted in fdlist
 int recvCommand(int connfd, struct Command *ptrcmd);
