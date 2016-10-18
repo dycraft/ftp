@@ -54,30 +54,6 @@ int acceptSocket(int listenfd) {
   return sockfd;
 }
 
-//
-// socket() -> connect()  =>
-int connectSocket(int port, char *host) {
-
-  int sockfd;
-  if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-    printf("Error socket(): %s(%d)\n", strerror(errno), errno);
-    return -1;
-  }
-
-  struct sockaddr_in addr;
-  memset(&addr, 0, sizeof(addr));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = inet_addr(host);
-
-  if(connect(sockfd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-    printf("Error connect(): %s(%d)\n", strerror(errno), errno);
-    return -1;
-  }
-
-  return sockfd;
-}
-
 // recv() -> send(rc)
 int recvCommand(int connfd, struct Command *ptrcmd) {
 
@@ -99,6 +75,62 @@ int recvCommand(int connfd, struct Command *ptrcmd) {
     return r_recv;
   }
 }
+
+
+int createPortSocket(struct sockaddr_in *addr) {
+  int sockfd;
+  sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (sockfd < 0) {
+    printf("Error socket(): %s(%d)\n", strerror(errno), errno);
+    return FAIL;
+  }
+
+  if(connect(sockfd, (struct sockaddr *)addr, sizeof(*addr)) < 0) {
+    printf("Error connect(): %s(%d)\n", strerror(errno), errno);
+    return -1;
+  }
+
+  return sockfd;
+}
+
+int createPasvSocket(int listenfd) {
+  return acceptSocket(listenfd);
+}
+
+int sendFile(int datafd, int connfd, char *filename) {
+  FILE *file = NULL;
+
+  file = fopen(filename, "rb");
+  if(!file) {
+    printf("Error fopen(): %s(%d)\n", strerror(errno), errno);
+    response(connfd, RC_NO_FILE, "Not found this file or no permission to open.");
+    return FAIL;
+  }
+
+  response(connfd, RC_FILE_OK, "File is ready for sending.");
+
+  char buf[DATA_SIZE];
+  int nread = -1;
+  while (nread > 0) {
+    nread = fread(buf, DATA_SIZE, DATA_ITEM, file);
+    if (nread < 0) {
+      printf("Error fread(): %s(%d)\n", strerror(errno), errno);
+      response(connfd, RC_LOC_ERR, "Cannot read local data.");
+      return FAIL;
+    }
+
+    if (send(datafd, buf, DATA_SIZE, 0) < 0) {
+      printf("Error send(): %s(%d)\n", strerror(errno), errno);
+      response(connfd, RC_NET_ERR, "Cannot open data connection, connection closed.");
+      return FAIL;
+    }
+  }
+
+  response(connfd, RC_FILE_OK, "File transfer successfully.");
+
+  return SUCC;
+}
+
 
 // send()
 int response(int sockfd, int rc, const char *reply) {

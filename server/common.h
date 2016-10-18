@@ -38,6 +38,8 @@
 #define FAIL -1
 
 #define BUFFER_SIZE 512
+#define DATA_ITEM 1
+#define DATA_SIZE 256
 
 #define DEFAULT_PORT  21
 #define DEFAULT_ROOT  "/tmp"
@@ -50,7 +52,7 @@ extern char *root;
 #define RC_SYNTAX_ERR 501
 #define RC_NO_IMP 502
 #define RC_ARG_ERR  504
-#define RC_EXEC_ERR 202
+#define RC_EXEC_ERR 550
 
 #define RC_NEW_USER 220
 #define RC_NEED_PASS  331
@@ -58,6 +60,13 @@ extern char *root;
 #define RC_LOGIN  230
 #define RC_LOGOUT 221
 #define RC_PASV_OK 227
+
+#define RC_NO_FILE  550
+#define RC_FILE_OK  150
+#define RC_NO_CNN 425
+#define RC_NET_ERR 426
+#define RC_CLS_CNN  226
+#define RC_LOC_ERR  451
 
 #define RC_SYST 215
 /* --- --- */

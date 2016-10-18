@@ -176,6 +176,8 @@ int cmd_pasv(char *arg, struct Socketfd *fd) {
     return FAIL;
   }
 
+  fd->mode = MODE_PASV;
+
   response(fd->connfd, RC_PASV_OK, buf);
 
   return SUCC;
@@ -221,6 +223,27 @@ int cmd_retr(char *arg, struct Socketfd *fd) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'RETR [filename]'.");
     return FAIL;
   }
+
+  // create data connection
+  int datafd;
+  if (fd->mode == MODE_PORT) {
+    datafd = createPortSocket(&(fd->addr));
+    if (datafd == FAIL) {
+      printf("Error createPortSocket(): %s(%d)\n", strerror(errno), errno);
+    }
+  } else if (fd->mode == MODE_PASV) {
+    datafd = createPasvSocket(fd->transfd);
+    if (datafd == FAIL) {
+      printf("Error createPasvSocket(): %s(%d)\n", strerror(errno), errno);
+    }
+  } else {
+    datafd = FAIL;
+  }
+  if (datafd == FAIL) {
+    response(fd->connfd, RC_NO_CNN, "No TCP connection was established.");
+    return FAIL;
+  }
+
 
   return SUCC;
 }
