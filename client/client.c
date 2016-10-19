@@ -1,5 +1,7 @@
 #include "client.h"
 
+int state = 0;
+
 int main(int argc, char* arg[]) {
 
   char *host = "127.0.0.1";
@@ -30,8 +32,32 @@ int main(int argc, char* arg[]) {
       printf("Error send(cmd): %s(%d)\n", strerror(errno), errno);
       break; // exit
     }
-    // recieve reply
-    showReply(connfd);
+
+    if (strncmp(buffer, "PORT", 4)) {
+      showReply(connfd);
+      state = MODE_PORT;
+    } else if (strncmp(buffer, "PASV", 4)) {
+      showReply(connfd);
+      state = MODE_PASV;
+    } else if (strncmp(buffer, "RETR", 4) ||
+        strncmp(buffer, "STOR", 4) ||
+        strncmp(buffer, "LIST", 4)) {
+      // File OK
+      showReply(connfd);
+
+      int datafd = 0;
+      if (state == MODE_PORT) {
+        datafd = acceptSocket(connfd);
+      } else if (state == MODE_PASV) {
+        datafd = connectSocket(char *host, int port);
+      }
+
+      // translate success
+      showReply(connfd);
+    } else {
+      // recieve reply
+      showReply(connfd);
+    }
   }
 
   close(connfd);
@@ -104,6 +130,20 @@ int connectSocket(char *host, int port) {
   return sockfd;
 }
 
+int acceptSocket(int listenfd) {
+  int sockfd;
+  struct sockaddr_in addr;
+  int len = sizeof(addr);
+
+  sockfd = accept(listenfd, (struct sockaddr *) &addr, (socklen_t *) &len);
+  if (sockfd == -1) {
+    printf("Error accept(): %s(%d)\n", strerror(errno), errno);
+    return -1;
+  }
+
+  return sockfd;
+}
+
 int recvReply(char *buffer, int connfd) {
 	if (recv(connfd, buffer, BUFFER_SIZE, 0) < 0) {
 		printf("Error recv(rc) from server(%d): %s(%d)\n", connfd, strerror(errno), errno);
@@ -135,4 +175,65 @@ int readCommand(char *buf, int size) {
   } else {
     return FAIL;
   }
+}
+
+
+int sendFile(int datafd, char *filename) {
+  FILE *file = NULL;
+
+  file = fopen(filename, "rb");
+  if(!file) {
+    printf("Error fopen(): %s(%d)\n", strerror(errno), errno);
+    return FAIL;
+  }
+
+  char buf[DATA_SIZE];
+  int nread = -1;
+  do {
+    memset(buf, 0, DATA_SIZE);
+    nread = fread(buf, DATA_SIZE, DATA_ITEM, file);
+    if (nread < 0) {
+      printf("Error fread(): %s(%d)\n", strerror(errno), errno);
+      return FAIL;
+    }
+
+    if (send(datafd, buf, DATA_SIZE, 0) < 0) {
+      printf("Error send(): %s(%d)\n", strerror(errno), errno);
+      return FAIL;
+    }
+  } while (nread > 0);
+
+  fclose(file);
+
+  return SUCC;
+}
+
+int recvFile(int datafd, char *filename) {
+  FILE *file = NULL;
+
+  file = fopen(filename, "rb");
+  if(!file) {
+    printf("Error fopen(): %s(%d)\n", strerror(errno), errno);
+    return FAIL;
+  }
+
+  char buf[DATA_SIZE];
+  int nwrite = -1;
+  do {
+    memset(buf, 0, DATA_SIZE);
+    if (recv(datafd, buf, DATA_SIZE, 0) < 0) {
+      printf("Error recv(): %s(%d)\n", strerror(errno), errno);
+      return FAIL;
+    }
+
+    nwrite = fwrite(buf, DATA_SIZE, DATA_ITEM, file);
+    if (nwrite < 0) {
+      printf("Error fwrite(): %s(%d)\n", strerror(errno), errno);
+      return FAIL;
+    }
+  } while (nwrite > 0);
+
+  fclose(file);
+
+  return SUCC;
 }
