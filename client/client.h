@@ -7,6 +7,8 @@
 int connectSocket(char *host, int port);
 // accept the data translation socket from server in PORT mode.
 int acceptSocket(int sockfd);
+// create a listen socketfd
+int createSocket(int port);
 // connect server with address with no port(a process to try port)
 int connectAddress(char *servname);
 

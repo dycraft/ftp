@@ -36,6 +36,9 @@ struct Status {
   int connfd;
   int datafd;
   int mode;
+  int pasv_port;
+  char *pasv_addr;
+  int port_transfd; // listenfd
 };
 
 #define MODE_NORM 0

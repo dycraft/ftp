@@ -142,10 +142,12 @@ int cmd_port(char *arg, struct Socketfd *fd) {
   inet_pton(AF_INET, address, &fd->addr.sin_addr);
 
   fd->mode = MODE_PORT;
+  close(fd->transfd);
+  fd->transfd = 0;
 
   char buf[BUFFER_SIZE];
   memset(buf, 0, BUFFER_SIZE);
-  sprintf(buf, "Convert to PORT mode successfully. (%s:%d)", address, port);
+  sprintf(buf, "Entering Port Mode. (%s)", arg);
   response(fd->connfd, RC_CMD_OK, buf);
 
   return SUCC;
@@ -162,6 +164,7 @@ int cmd_pasv(char *arg, struct Socketfd *fd) {
   fd->transfd = createSocket(port);
 
   char buf[BUFFER_SIZE];
+  memset(buf, 0, BUFFER_SIZE);
   char ip[16];
   if (getip(ip) == FAIL) {
     printf("Error *getip().");
@@ -173,8 +176,12 @@ int cmd_pasv(char *arg, struct Socketfd *fd) {
   }
 
   fd->mode = MODE_PASV;
+  memset(&(fd->addr), 0, sizeof(struct sockaddr_in));
 
-  response(fd->connfd, RC_PASV_OK, buf);
+  char buffer[BUFFER_SIZE];
+  memset(buffer, 0, BUFFER_SIZE);
+  sprintf(buffer, "Entering Passive Mode. (%s)", buf);
+  response(fd->connfd, RC_CMD_OK, buffer);
 
   return SUCC;
 }
@@ -313,7 +320,7 @@ int encodeAddress(char *buf, char *addr, int port) {
   p1 = port / 256;
   p2 = port % 256;
 
-  sprintf(buf, "Entering Passive Mode. (%d,%d,%d,%d,%d,%d)", h1, h2, h3, h4, p1, p2);
+  sprintf(buf, "%d,%d,%d,%d,%d,%d", h1, h2, h3, h4, p1, p2);
 
   return SUCC;
 }

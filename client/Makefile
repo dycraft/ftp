@@ -1,7 +1,7 @@
 CC=clang
 CFLAGS=-c -Wall
 LDFLAGS=-lm
-SOURCES=main.c client.c command.c
+SOURCES=main.c client.c command.c util.h
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=ftpclient
 
