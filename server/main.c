@@ -69,7 +69,7 @@ int main(int argc, char *arg[]) {
       }
       response(connfd, RC_NEW_USER, "Server ready for new user.");
     }
-    
+
     //parse command
     for (int i = 0; i < fdlist.size; i++) {
       if (FD_ISSET(fdlist.list[i].connfd, &readfd)) {

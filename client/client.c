@@ -1,72 +1,7 @@
 #include "client.h"
 
-int state = 0;
-
-int main(int argc, char* arg[]) {
-
-  char *host = "127.0.0.1";
-  char *port = arg[1];
-
-  // create socket
-  int connfd = connectSocket(host, atoi(port));
-  if (connfd == FAIL) {
-    printf("Error *connectAddress(): %s(%d)\n", strerror(errno), errno);
-    return 1;
-  }
-
-  printf("connected to %s.\n", host);
-
-  showReply(connfd);
-
-  while (true) {
-
-    char buffer[BUFFER_SIZE];
-    memset(buffer, 0, BUFFER_SIZE);
-    // read command
-    if (readCommand(buffer, BUFFER_SIZE) == FAIL) {
-      printf("Error *readcmd(): %s(%d)\n", strerror(errno), errno);
-      break;
-    }
-    // send command
-    if (send(connfd, buffer, strlen(buffer), 0) == -1) {
-      printf("Error send(cmd): %s(%d)\n", strerror(errno), errno);
-      break; // exit
-    }
-
-    if (strncmp(buffer, "PORT", 4)) {
-      showReply(connfd);
-      state = MODE_PORT;
-    } else if (strncmp(buffer, "PASV", 4)) {
-      showReply(connfd);
-      state = MODE_PASV;
-    } else if (strncmp(buffer, "RETR", 4) ||
-        strncmp(buffer, "STOR", 4) ||
-        strncmp(buffer, "LIST", 4)) {
-      // File OK
-      showReply(connfd);
-
-      int datafd = 0;
-      if (state == MODE_PORT) {
-        datafd = acceptSocket(connfd);
-      } else if (state == MODE_PASV) {
-        datafd = connectSocket(char *host, int port);
-      }
-
-      // translate success
-      showReply(connfd);
-    } else {
-      // recieve reply
-      showReply(connfd);
-    }
-  }
-
-  close(connfd);
-
-  return 0;
-}
-
 // getaddrinfo() -> loop(socket() -> connect())  =>  connfd
-int connectAddress(char *hostname, char *servname) {
+int connectAddress(char *servname) {
 
   // getaddrinfo()
   struct addrinfo hints, *res0;
@@ -107,6 +42,7 @@ int connectAddress(char *hostname, char *servname) {
   return connfd;
 }
 
+// socket() -> connect() => sockfd
 int connectSocket(char *host, int port) {
 
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -130,6 +66,7 @@ int connectSocket(char *host, int port) {
   return sockfd;
 }
 
+// accept()
 int acceptSocket(int listenfd) {
   int sockfd;
   struct sockaddr_in addr;
@@ -144,6 +81,7 @@ int acceptSocket(int listenfd) {
   return sockfd;
 }
 
+// recv(connfd)
 int recvReply(char *buffer, int connfd) {
 	if (recv(connfd, buffer, BUFFER_SIZE, 0) < 0) {
 		printf("Error recv(rc) from server(%d): %s(%d)\n", connfd, strerror(errno), errno);
@@ -152,17 +90,19 @@ int recvReply(char *buffer, int connfd) {
 	return SUCC;
 }
 
-void showReply(int connfd) {
+// loop (recvReply()) => print()
+void printReply(int connfd) {
   char buf[BUFFER_SIZE];
   memset(buf, 0, BUFFER_SIZE);
-  int r = FAIL;
+  recvReply(buf, connfd);
+  /*int r = FAIL;
   while (r == FAIL) {
     r = recvReply(buf, connfd);
-  }
+  }*/
   printf("%s", buf);
 }
 
-
+// fgets()
 int readCommand(char *buf, int size) {
   printf("ftp> ");
   fflush(stdout);
