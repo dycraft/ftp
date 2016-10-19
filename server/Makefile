@@ -1,4 +1,4 @@
-CC=gcc
+CC=clang
 CFLAGS=-c -Wall
 LDFLAGS=-lm
 SOURCES=main.c server.c fdlist.c command.c

@@ -1,4 +1,4 @@
-CC=gcc
+CC=clang
 CFLAGS=-c -Wall
 LDFLAGS=-lm
 SOURCES=client.c
