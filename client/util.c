@@ -28,6 +28,17 @@ int getip(char *ip) {
 }
 
 
+int parseRC(char *reply) {
+  int rc = 0;
+  int num = sscanf(reply, "%d", &rc);
+  if (num != 1) {
+    return FAIL;
+  } else {
+    return rc;
+  }
+}
+
+
 int decodeAddress(char *addr, int *port, char *buf) {
   int h1, h2, h3, h4, p1, p2;
   int num = sscanf(buf, "%d,%d,%d,%d,%d,%d", &h1, &h2, &h3, &h4, &p1, &p2);

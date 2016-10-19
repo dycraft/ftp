@@ -9,6 +9,8 @@ int connectSocket(char *host, int port);
 int acceptSocket(int sockfd);
 // create a listen socketfd
 int createSocket(int port);
+// create datafd to transfer file
+int createDataSocket(struct Status *status);
 // connect server with address with no port(a process to try port)
 int connectAddress(char *servname);
 
@@ -19,8 +21,8 @@ int recvReply(char *buffer, int connfd);
 // wrapper of recvreply()
 void printReply(int connfd);
 
-int recvFile(int datafd, char *filename);
-int sendFile(int datafd, char *filename);
+int recvFile(int datafd, int connfd, char *filename);
+int sendFile(int datafd, int connfd, char *filename);
 
 
 

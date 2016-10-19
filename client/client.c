@@ -119,6 +119,25 @@ int createSocket(int port) {
   return sockfd;
 }
 
+int createDataSocket(struct Status *status) {
+  int datafd;
+  if (status->mode == MODE_PORT) {
+    datafd = acceptSocket(status->port_transfd);
+    if (datafd == FAIL) {
+      printf("Error *acceptSocket(): %s(%d)\n", strerror(errno), errno);
+    }
+  } else if (status->mode == MODE_PASV) {
+    datafd = connectSocket(status->pasv_addr, status->pasv_port);
+    if (datafd == FAIL) {
+      printf("Error connectSocket(): %s(%d)\n", strerror(errno), errno);
+    }
+  } else {
+    datafd = FAIL;
+  }
+
+  return datafd;
+}
+
 // recv(connfd)
 int recvReply(char *buffer, int connfd) {
 	if (recv(connfd, buffer, BUFFER_SIZE, 0) < 0) {
@@ -156,7 +175,7 @@ int readCommand(char *buf, int size) {
 }
 
 
-int sendFile(int datafd, char *filename) {
+int sendFile(int datafd, int connfd, char *filename) {
   FILE *file = NULL;
 
   file = fopen(filename, "rb");
@@ -186,7 +205,7 @@ int sendFile(int datafd, char *filename) {
   return SUCC;
 }
 
-int recvFile(int datafd, char *filename) {
+int recvFile(int datafd, int connfd, char *filename) {
   FILE *file = NULL;
 
   file = fopen(filename, "rb");

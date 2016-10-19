@@ -67,6 +67,7 @@ extern char *root;
 #define RC_NET_ERR 426
 #define RC_CLS_CNN  226
 #define RC_LOC_ERR  451
+#define RC_TRANS_OK 226
 
 #define RC_SYST 215
 /* --- --- */

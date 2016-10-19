@@ -131,7 +131,10 @@ int sendFile(int datafd, int connfd, char *filename) {
     return FAIL;
   }
 
-  response(connfd, RC_FILE_OK, "File is ready for sending.");
+  char b[BUFFER_SIZE];
+  memset(b, 0, BUFFER_SIZE);
+  sprintf(b, "Server is ready for sending file:%s ...", filename);
+  response(connfd, RC_FILE_OK, b);
 
   char buf[DATA_SIZE];
   int nread = -1;
@@ -151,7 +154,7 @@ int sendFile(int datafd, int connfd, char *filename) {
     }
   } while (nread > 0);
 
-  response(connfd, RC_FILE_OK, "File transfer successfully.");
+  response(connfd, RC_TRANS_OK, "File transfer successfully.");
 
   fclose(file);
 
@@ -168,7 +171,10 @@ int recvFile(int datafd, int connfd, char *filename) {
     return FAIL;
   }
 
-  response(connfd, RC_FILE_OK, "File is ready for recieving.");
+  char b[BUFFER_SIZE];
+  memset(b, 0, BUFFER_SIZE);
+  sprintf(b, "Server is ready for recieving file:%s ...", filename);
+  response(connfd, RC_FILE_OK, b);
 
   char buf[DATA_SIZE];
   int nwrite = -1;
@@ -187,6 +193,8 @@ int recvFile(int datafd, int connfd, char *filename) {
       return FAIL;
     }
   } while (nwrite > 0);
+
+  response(connfd, RC_TRANS_OK, "File transfer successfully.");
 
   fclose(file);
 

@@ -9,7 +9,8 @@ char *handlelist[] = {
   "PORT",
   "PASV",
   "RETR",
-  "STOR"
+  "STOR",
+  "LIST"
 };
 
 int (*handle[])() = {
@@ -17,7 +18,8 @@ int (*handle[])() = {
   &handle_port,
   &handle_pasv,
   &handle_retr,
-  &handle_stor
+  &handle_stor,
+  &handle_list
 };
 
 /* command's methods */
@@ -33,7 +35,7 @@ int command_parse(struct Command * cmd, char *buf) {
 }
 
 
-int handle_quit(char *reply, struct Status *status) {
+int handle_quit(char *arg, char *reply, struct Status *status) {
   close(status->connfd);
   if (status->datafd > 0) {
     close(status->datafd);
@@ -41,14 +43,12 @@ int handle_quit(char *reply, struct Status *status) {
   exit(0);
 }
 
-int handle_port(char *reply, struct Status *status) {
+int handle_port(char *arg, char *reply, struct Status *status) {
 
   // decode address in reply
-  char buf[ARG_LEN], temp[BUFFER_SIZE];
-  sscanf(reply, "%[^(](%[^)])", temp, buf); // convert the format to "h1,h2,h3,h4,p1,p2"
   char addr[20];
   int port = 0;
-  if (decodeAddress(addr, &port, buf) == FAIL) {
+  if (decodeAddress(addr, &port, arg) == FAIL) {
     printf("Error *decodeAddress().");
     return FAIL;
   }
@@ -63,7 +63,7 @@ int handle_port(char *reply, struct Status *status) {
   return SUCC;
 }
 
-int handle_pasv(char *reply, struct Status *status) {
+int handle_pasv(char *arg, char *reply, struct Status *status) {
 
   // decode address in reply
   char buf[ARG_LEN], temp[BUFFER_SIZE];
@@ -85,12 +85,83 @@ int handle_pasv(char *reply, struct Status *status) {
   return SUCC;
 }
 
-int handle_retr(char *reply, struct Status *status) {
+int handle_retr(char *arg, char *reply, struct Status *status) {
+
+  // get rc
+  int rc = parseRC(reply);
+  if (rc == FAIL) {
+    printf("Error *parseRC().\n");
+    return FAIL;
+  }
+
+  // first response
+  if (rc != RC_FILE_OK) {
+    return FAIL;
+  }
+
+  int datafd = createDataSocket(status);
+  if (datafd == FAIL) {
+    return FAIL;
+  }
+
+  // data translation
+  char buf[BUFFER_SIZE];
+  memset(buf, 0, BUFFER_SIZE);
+  strcpy(buf, root);
+  strcat(buf, arg);
+  if (recvFile(datafd, status->connfd, buf) == FAIL) {
+    printf("Error *recvFile(%d, %s).", datafd, buf);
+  }
+
+  close(datafd);
+
+  // second response
+  if (rc != RC_TRANS_OK) {
+    return FAIL;
+  }
 
   return SUCC;
 }
 
-int handle_stor(char *reply, struct Status *status) {
+int handle_stor(char *arg, char *reply, struct Status *status) {
+
+  // get rc
+  int rc = parseRC(reply);
+  if (rc == FAIL) {
+    printf("Error *parseRC().\n");
+    return FAIL;
+  }
+
+  // first response
+  if (rc != RC_FILE_OK) {
+    return FAIL;
+  }
+
+  int datafd = createDataSocket(status);
+  if (datafd == FAIL) {
+    return FAIL;
+  }
+
+  // data translation
+  char buf[BUFFER_SIZE];
+  memset(buf, 0, BUFFER_SIZE);
+  strcpy(buf, root);
+  strcat(buf, arg);
+  if (sendFile(datafd, status->connfd, buf) == FAIL) {
+    printf("Error *sendFile(%d, %s).", datafd, buf);
+  }
+
+  close(datafd);
+
+  // second response
+  if (rc != RC_TRANS_OK) {
+    return FAIL;
+  }
+
+  return SUCC;
+}
+
+int handle_list(char *arg, char *reply, struct Status *status) {
 
   return SUCC;
 }

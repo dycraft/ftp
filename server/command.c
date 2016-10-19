@@ -142,7 +142,6 @@ int cmd_port(char *arg, struct Socketfd *fd) {
   inet_pton(AF_INET, address, &fd->addr.sin_addr);
 
   fd->mode = MODE_PORT;
-  close(fd->transfd);
   fd->transfd = 0;
 
   char buf[BUFFER_SIZE];
@@ -243,13 +242,17 @@ int cmd_retr(char *arg, struct Socketfd *fd) {
   memset(buf, 0, BUFFER_SIZE);
   strcpy(buf, root);
   strcat(buf, arg);
-  if (sendFile(fd->transfd, fd->connfd, buf) == FAIL) {
-    printf("Error *sendFile(%d, %s).", fd->transfd, buf);
+  if (sendFile(datafd, fd->connfd, buf) == FAIL) {
+    printf("Error *sendFile(%d, %s).", datafd, buf);
   }
+
+  close(datafd);
 
   // init data connection
   memset(&(fd->addr), 0, sizeof(fd->addr));
-  fd->transfd = 0;
+  if (fd->transfd > 0) {
+    fd->transfd = 0;
+  }
 
   return SUCC;
 }
@@ -272,13 +275,17 @@ int cmd_stor(char *arg, struct Socketfd *fd) {
   memset(buf, 0, BUFFER_SIZE);
   strcpy(buf, root);
   strcat(buf, arg);
-  if (recvFile(fd->transfd, fd->connfd, buf) == FAIL) {
-    printf("Error *recvFile(%d, %s).", fd->transfd, buf);
+  if (recvFile(datafd, fd->connfd, buf) == FAIL) {
+    printf("Error *recvFile(%d, %s).", datafd, buf);
   }
+
+  close(datafd);
 
   // init data connection
   memset(&(fd->addr), 0, sizeof(fd->addr));
-  fd->transfd = 0;
+  if (fd->transfd > 0) {
+    fd->transfd = 0;
+  }
 
   return SUCC;
 }

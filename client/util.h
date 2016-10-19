@@ -4,8 +4,9 @@
 #include "common.h"
 
 int randPort(int seed);
-
 int getip(char *ip);
+
+int parseRC(char *reply);
 
 int decodeAddress(char *addr, int *port, char *buf);
 int encodeAddress(char *buf, char *addr, int port);

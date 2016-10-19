@@ -8,6 +8,7 @@ int main(int argc, char* arg[]) {
 
   char *host = "127.0.0.1";
   char *port = arg[1];
+  char *root = DEFAULT_ROOT;
 
   // status init
   struct Status status;
@@ -80,7 +81,7 @@ int handleCommand(struct Command *cmd, struct Status *status) {
   // handle data connection command
   for (int i = 0; i < HANDLE_NUM; i++) {
     if (strcmp(handlelist[i], cmd->name) == 0) {
-      if (handler[i](cmd->arg, status) == FAIL) {
+      if (handler[i](cmd->arg, buf, status) == FAIL) {
         printf("Error %s().\n", cmd->name);
         return FAIL;
       }
