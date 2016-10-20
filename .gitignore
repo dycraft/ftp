@@ -4,7 +4,6 @@ test.h
 test
 *tmp/
 .python-version
-autograde.py
 
 # Object files
 *.o

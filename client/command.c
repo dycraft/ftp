@@ -153,7 +153,7 @@ int handle_retr(char *arg, struct Status *status) {
   strcpy(buf, root);
   strcat(buf, arg);
   if (recvFile(datafd, status->connfd, buf) == FAIL) {
-    printf("Error *recvFile(%d, %s).", datafd, buf);
+    printf("Error *recvFile(%d, %s).\n", datafd, buf);
   }
 
   close(datafd);
