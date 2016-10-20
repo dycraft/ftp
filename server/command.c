@@ -84,7 +84,7 @@ int cmd_syst(char *arg, struct Socketfd *fd) {
     return FAIL;
   }
 
-  response(fd->connfd, RC_SYST, "UNIX Type: L8.");
+  response(fd->connfd, RC_SYST, "UNIX Type: L8");
 
   return SUCC;
 }

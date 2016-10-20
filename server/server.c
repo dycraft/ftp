@@ -61,6 +61,8 @@ int recvCommand(int connfd, struct Command *ptrcmd) {
   memset(buffer, 0, BUFFER_SIZE);
 
   int r_recv = recv(connfd, buffer, BUFFER_SIZE, 0);
+  printf("Recieve command: %s", buffer);
+
   if (r_recv == -1) {
     printf("Error recv(): %s(%d), timeout.\n", strerror(errno), errno);
     return FAIL;
@@ -68,7 +70,6 @@ int recvCommand(int connfd, struct Command *ptrcmd) {
     printf("Error recv(): %s(%d), client disconnect.\n", strerror(errno), errno);
     return 0;
   } else {
-    printf("Recieve command: %s\n", buffer);
     // parse command
     if (command_parse(ptrcmd, buffer) == FAIL) {
       printf("Error *command_parse().\n");
@@ -201,9 +202,9 @@ int recvFile(int datafd, int connfd, char *filename) {
 int response(int sockfd, int rc, const char *reply) {
   char buf[BUFFER_SIZE];
   memset(buf, 0, BUFFER_SIZE);
-  sprintf(buf, "%d %s\r\n", rc, reply);
-
-  if (send(sockfd, buf, BUFFER_SIZE, 0) == -1) {
+  sprintf(buf, "%d %s \n", rc, reply);
+  int n;
+  if ((n = send(sockfd, buf, strlen(buf), 0)) == -1) {
     printf("Error send(%d) to fd(%d): %s(%d)\n", rc, sockfd, strerror(errno), errno);
     return FAIL;
   } else {

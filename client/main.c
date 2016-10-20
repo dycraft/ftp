@@ -2,7 +2,7 @@
 #include "client.h"
 #include "command.h"
 
-#define printf(...) fprintf(stderr, __VA_ARGS__)
+//#define printf(...) fprintf(stderr, __VA_ARGS__)
 
 int handleCommand(struct Command *cmd, struct Status *status);
 

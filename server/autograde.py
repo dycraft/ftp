@@ -39,11 +39,12 @@ def create_test_file(filename):
 def test(port=21, directory='/tmp'):
   global credit
   if port == 21 and directory == '/tmp':
-    server = subprocess.Popen('./server', stdout=subprocess.PIPE)
+    server = subprocess.Popen('./server')
   else:
-    server = subprocess.Popen(['./server', '-port', '%d' % port, '-root', directory], stdout=subprocess.PIPE)
+    server = subprocess.Popen(['./server', '-port', '%d' % port, '-root', directory])
   time.sleep(0.1)
   try:
+    #import pdb; pdb.set_trace()
     ftp = FTP()
     # connect
     if not ftp.connect('127.0.0.1', port).startswith('220'):
