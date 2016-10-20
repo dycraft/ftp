@@ -66,10 +66,10 @@ int cmd_user(char *arg, struct Socketfd *fd) {
 
 // PASS
 int cmd_pass(char *arg, struct Socketfd *fd) {
-  if (!strlen(arg)) {
+  /*if (!strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'PASS [email_address]'.");
     return FAIL;
-  }
+  }*/
 
   // login successfully
   response(fd->connfd, RC_LOGIN, "Login successfully, welcome.");
