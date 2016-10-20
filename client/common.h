@@ -53,5 +53,7 @@ struct Status {
 //
 #define RC_FILE_OK 150
 #define RC_TRANS_OK 226
+#define RC_CMD_OK 200
+#define RC_LOGOUT 221
 
 #endif

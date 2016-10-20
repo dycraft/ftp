@@ -56,10 +56,7 @@ int main(int argc, char* arg[]) {
     }
 
     // handle command
-    if (handleCommand(&cmd, &status) == FAIL) {
-      printf("Error *handleCommand().\n");
-    }
-
+    handleCommand(&cmd, &status);
   }
 
   // close connection safely
@@ -78,7 +75,6 @@ int handleCommand(struct Command *cmd, struct Status *status) {
   for (int i = 0; i < HANDLE_NUM; i++) {
     if (strcmp(handlelist[i], cmd->name) == 0) {
       if (handler[i](cmd->arg, status) == FAIL) {
-        printf("Error %s().\n", cmd->name);
         return FAIL;
       }
       return SUCC;

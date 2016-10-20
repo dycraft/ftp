@@ -45,6 +45,10 @@ int handle_quit(char *arg, struct Status *status) {
   }
   printf("%s", reply);
 
+  if (parseRC(reply) != RC_LOGOUT) {
+    return FAIL;
+  }
+
   // exit
   close(status->connfd);
   if (status->datafd > 0) {
@@ -63,11 +67,15 @@ int handle_port(char *arg, struct Status *status) {
   }
   printf("%s", reply);
 
+  if (parseRC(reply) != RC_CMD_OK) {
+    return FAIL;
+  }
+
   // decode address in reply
   char addr[20];
   int port = 0;
   if (decodeAddress(addr, &port, arg) == FAIL) {
-    printf("Error *decodeAddress().");
+    printf("Error *decodeAddress().\n");
     return FAIL;
   }
   // creata listenfd(transfd)
@@ -91,13 +99,17 @@ int handle_pasv(char *arg, struct Status *status) {
   }
   printf("%s", reply);
 
+  if (parseRC(reply) != RC_CMD_OK) {
+    return FAIL;
+  }
+
   // decode address in reply
   char buf[ARG_LEN], temp[BUFFER_SIZE];
   sscanf(reply, "%[^(](%[^)])", temp, buf); // convert the format to "h1,h2,h3,h4,p1,p2"
   char addr[20];
   int port = 0;
   if (decodeAddress(addr, &port, buf) == FAIL) {
-    printf("Error *decodeAddress().");
+    printf("Error *decodeAddress().\n");
     return FAIL;
   }
 
@@ -129,15 +141,8 @@ int handle_retr(char *arg, struct Status *status) {
   }
   printf("%s", reply);
 
-  int rc = 0;
-  // get rc
-  rc = parseRC(reply);
-  if (rc == FAIL) {
-    printf("Error *parseRC1().\n");
-    close(datafd);
-    return FAIL;
-  }
-  if (rc != RC_FILE_OK) {
+  // first rc
+  if (parseRC(reply) != RC_FILE_OK) {
     close(datafd);
     return FAIL;
   }
@@ -161,13 +166,7 @@ int handle_retr(char *arg, struct Status *status) {
   printf("%s", reply);
 
   // second response
-  rc = parseRC(reply);
-  if (rc == FAIL) {
-    printf("Error *parseRC().\n");
-    close(datafd);
-    return FAIL;
-  }
-  if (rc != RC_TRANS_OK) {
+  if (parseRC(reply) != RC_TRANS_OK) {
     return FAIL;
   }
 
@@ -190,13 +189,7 @@ int handle_stor(char *arg, struct Status *status) {
   printf("%s", reply);
 
   // get rc
-  int rc = parseRC(reply);
-  if (rc == FAIL) {
-    printf("Error *parseRC().\n");
-    close(datafd);
-    return FAIL;
-  }
-  if (rc != RC_FILE_OK) {
+  if (parseRC(reply) != RC_FILE_OK) {
     close(datafd);
     return FAIL;
   }
@@ -207,7 +200,7 @@ int handle_stor(char *arg, struct Status *status) {
   strcpy(buf, root);
   strcat(buf, arg);
   if (sendFile(datafd, status->connfd, buf) == FAIL) {
-    printf("Error *sendFile(%d, %s).", datafd, buf);
+    printf("Error *sendFile(%d, %s).\n", datafd, buf);
   }
 
   close(datafd);
@@ -220,13 +213,7 @@ int handle_stor(char *arg, struct Status *status) {
   printf("%s", reply);
 
   // second response
-  rc = parseRC(reply);
-  if (rc == FAIL) {
-    printf("Error *parseRC().\n");
-    close(datafd);
-    return FAIL;
-  }
-  if (rc != RC_TRANS_OK) {
+  if (parseRC(reply) != RC_TRANS_OK) {
     return FAIL;
   }
 

@@ -126,7 +126,6 @@ int createDataSocket(struct Status *status) {
     if (datafd == FAIL) {
       printf("Error *acceptSocket(): %s(%d)\n", strerror(errno), errno);
     }
-    printf("Accept socket(%d) successfully, gain datafd(%d)", status->port_transfd, status->datafd);
   } else if (status->mode == MODE_PASV) {
     datafd = connectSocket(status->pasv_addr, status->pasv_port);
     if (datafd == FAIL) {

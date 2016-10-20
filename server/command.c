@@ -124,6 +124,7 @@ int cmd_quit(char *arg, struct Socketfd *fd) {
 
 // PORT
 int cmd_port(char *arg, struct Socketfd *fd) {
+
   char address[16];
   int port;
   if (!strlen(arg)) {
@@ -142,7 +143,10 @@ int cmd_port(char *arg, struct Socketfd *fd) {
   inet_pton(AF_INET, address, &fd->addr.sin_addr);
 
   fd->mode = MODE_PORT;
-  fd->transfd = 0;
+  if (fd->transfd > 0) {
+    close(fd->transfd);
+    fd->transfd = 0;
+  }
 
   char buf[BUFFER_SIZE];
   memset(buf, 0, BUFFER_SIZE);
@@ -154,11 +158,13 @@ int cmd_port(char *arg, struct Socketfd *fd) {
 
 // PASV
 int cmd_pasv(char *arg, struct Socketfd *fd) {
+
   if (strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'PASV'.");
     return FAIL;
   }
 
+  // restor the listenfd (transfd)
   int port = randPort(fd->connfd);
   fd->transfd = createSocket(port);
   if (fd->transfd == FAIL) {
@@ -218,7 +224,7 @@ int cmd_list(char *arg, struct Socketfd *fd) {
     return FAIL;
   }*/
 
-  /*response(fd->connfd, RC_CMD_OK, buf);*/
+  //response(fd->connfd, RC_CMD_OK, buf);
 
   fclose(file);
 
@@ -251,7 +257,7 @@ int cmd_retr(char *arg, struct Socketfd *fd) {
   strcpy(buf, root);
   strcat(buf, arg);
   if (sendFile(datafd, fd->connfd, buf) == FAIL) {
-    printf("Error *sendFile(%d, %s).", datafd, buf);
+    printf("Error *sendFile(%d, %s).\n", datafd, buf);
     close(datafd);
     return FAIL;
   }
@@ -261,6 +267,7 @@ int cmd_retr(char *arg, struct Socketfd *fd) {
   // init data connection
   memset(&(fd->addr), 0, sizeof(fd->addr));
   if (fd->transfd > 0) {
+    close(fd->transfd);
     fd->transfd = 0;
   }
 
@@ -295,6 +302,7 @@ int cmd_stor(char *arg, struct Socketfd *fd) {
   // init data connection
   memset(&(fd->addr), 0, sizeof(fd->addr));
   if (fd->transfd > 0) {
+    close(fd->transfd);
     fd->transfd = 0;
   }
 

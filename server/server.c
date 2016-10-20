@@ -178,7 +178,8 @@ int recvFile(int datafd, int connfd, char *filename) {
   int nwrite = -1;
   do {
     memset(buf, 0, DATA_SIZE);
-    if (read(datafd, buf, DATA_SIZE) < 0) {
+    nwrite = read(datafd, buf, DATA_SIZE);
+    if (nwrite < 0) {
       printf("Error recv(): %s(%d)\n", strerror(errno), errno);
       response(connfd, RC_NET_ERR, "Cannot accept data connection, connection closed.");
       fclose(file);
