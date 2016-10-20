@@ -42,7 +42,7 @@
 #define DATA_SIZE 1024
 
 #define DEFAULT_PORT  21
-#define DEFAULT_ROOT  "tmp/"
+#define DEFAULT_ROOT  "/tmp"
 
 extern int port;
 extern char *root;

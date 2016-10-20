@@ -151,6 +151,7 @@ int handle_retr(char *arg, struct Status *status) {
   char buf[BUFFER_SIZE];
   memset(buf, 0, BUFFER_SIZE);
   strcpy(buf, root);
+  strcpy(buf, "/");
   strcat(buf, arg);
   if (recvFile(datafd, status->connfd, buf) == FAIL) {
     printf("Error *recvFile(%d, %s).\n", datafd, buf);
@@ -198,6 +199,7 @@ int handle_stor(char *arg, struct Status *status) {
   char buf[BUFFER_SIZE];
   memset(buf, 0, BUFFER_SIZE);
   strcpy(buf, root);
+  strcpy(buf, "/");
   strcat(buf, arg);
   if (sendFile(datafd, status->connfd, buf) == FAIL) {
     printf("Error *sendFile(%d, %s).\n", datafd, buf);
