@@ -37,7 +37,7 @@ void fdlist_init(struct FdList *fdlist);
 int fdlist_max(struct FdList *fdlist);
 
 // poll out the fd_set into fdlist
-void fdlist_poll(struct FdList *fdlist, struct fd_set *sockfd);
+void fdlist_poll(struct FdList *fdlist, fd_set *sockfd);
 
 // is full
 int fdlist_isfull(struct FdList *fdlist);
