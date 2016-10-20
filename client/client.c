@@ -128,7 +128,6 @@ int createDataSocket(struct Status *status) {
     }
     printf("Accept socket(%d) successfully, gain datafd(%d)", status->port_transfd, status->datafd);
   } else if (status->mode == MODE_PASV) {
-    printf("Begin to connectSocket...\n");
     datafd = connectSocket(status->pasv_addr, status->pasv_port);
     if (datafd == FAIL) {
       printf("Error connectSocket(): %s(%d)\n", strerror(errno), errno);
@@ -179,10 +178,10 @@ int readCommand(char *buf, int size) {
 
 
 int sendFile(int datafd, int connfd, char *filename) {
-  
+
   FILE *file = NULL;
 
-  file = fopen(filename, "rb");
+  file = fopen(filename, "rb+");
   if(!file) {
     printf("Error fopen(): %s(%d)\n", strerror(errno), errno);
     return FAIL;
@@ -192,14 +191,11 @@ int sendFile(int datafd, int connfd, char *filename) {
   int nread = -1;
   do {
     memset(buf, 0, DATA_SIZE);
-    nread = fread(buf, DATA_SIZE, DATA_ITEM, file);
-    if (nread < 0) {
-      printf("Error fread(): %s(%d)\n", strerror(errno), errno);
-      return FAIL;
-    }
+    nread = fread(buf, 1, DATA_SIZE, file);
 
-    if (send(datafd, buf, DATA_SIZE, 0) < 0) {
+    if (write(datafd, buf, nread) < 0) {
       printf("Error send(): %s(%d)\n", strerror(errno), errno);
+      fclose(file);
       return FAIL;
     }
   } while (nread > 0);
@@ -223,16 +219,14 @@ int recvFile(int datafd, int connfd, char *filename) {
   int nwrite = -1;
   do {
     memset(buf, 0, DATA_SIZE);
-    if (recv(datafd, buf, DATA_SIZE, 0) < 0) {
+    nwrite = read(datafd, buf, DATA_SIZE);
+    if (nwrite < 0) {
       printf("Error recv(): %s(%d)\n", strerror(errno), errno);
+      fclose(file);
       return FAIL;
     }
 
-    nwrite = fwrite(buf, DATA_SIZE, DATA_ITEM, file);
-    if (nwrite < 0) {
-      printf("Error fwrite(): %s(%d)\n", strerror(errno), errno);
-      return FAIL;
-    }
+    fwrite(buf, nwrite, 1, file);
   } while (nwrite > 0);
 
   fclose(file);

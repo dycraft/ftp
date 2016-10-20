@@ -133,7 +133,7 @@ int handle_retr(char *arg, struct Status *status) {
   // get rc
   rc = parseRC(reply);
   if (rc == FAIL) {
-    printf("Error *parseRC().\n");
+    printf("Error *parseRC1().\n");
     close(datafd);
     return FAIL;
   }

@@ -26,8 +26,7 @@
 #define FAIL -1
 
 #define BUFFER_SIZE 512
-#define DATA_ITEM 1
-#define DATA_SIZE 256
+#define DATA_SIZE 1024
 
 extern int port;
 extern char *host;

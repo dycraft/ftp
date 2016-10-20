@@ -211,14 +211,14 @@ int cmd_list(char *arg, struct Socketfd *fd) {
 		return FAIL;
 	}
 
-  char buf[DATA_SIZE];
+  /*char buf[DATA_SIZE];
   memset(buf, 0, DATA_SIZE);
   if (fread(buf, DATA_SIZE-1, DATA_ITEM, file) == FAIL) {
     printf("Error fread().\n");
     return FAIL;
-  }
+  }*/
 
-  response(fd->connfd, RC_CMD_OK, buf);
+  /*response(fd->connfd, RC_CMD_OK, buf);*/
 
   fclose(file);
 

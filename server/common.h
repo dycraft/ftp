@@ -38,8 +38,7 @@
 #define FAIL -1
 
 #define BUFFER_SIZE 512
-#define DATA_ITEM 1
-#define DATA_SIZE 256
+#define DATA_SIZE 1024
 
 #define DEFAULT_PORT  21
 #define DEFAULT_ROOT  "tmp/"
