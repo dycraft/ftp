@@ -161,17 +161,21 @@ void printReply(int connfd) {
 
 // fgets()
 int readCommand(char *buf, int size) {
-  printf("ftp> ");
-  fflush(stdout);
-  //fflush(stdin);
+  while (true) {
+    printf("ftp> ");
+    fflush(stdout);
 
-  memset(buf, 0, size);
-  if (fgets(buf, size, stdin) != NULL) {
-    char *c = strchr(buf, '\n');
-    if (c) *c = '\0';
-    return SUCC;
-  } else {
-    return FAIL;
+    memset(buf, 0, size);
+    if (fgets(buf, size, stdin) != NULL) {
+      if (buf[0] == '\n') {
+        continue;
+      }
+      //char *c = strchr(buf, '\n');
+      //if (c) *c = '\0';
+      return SUCC;
+    } else {
+      return FAIL;
+    }
   }
 }
 
