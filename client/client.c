@@ -66,7 +66,7 @@ int connectSocket(char *host, int port) {
   return sockfd;
 }
 
-// accept()
+// accept() => connfd
 int acceptSocket(int listenfd) {
   int sockfd;
   struct sockaddr_in addr;
@@ -126,7 +126,9 @@ int createDataSocket(struct Status *status) {
     if (datafd == FAIL) {
       printf("Error *acceptSocket(): %s(%d)\n", strerror(errno), errno);
     }
+    printf("Accept socket(%d) successfully, gain datafd(%d)", status->port_transfd, status->datafd);
   } else if (status->mode == MODE_PASV) {
+    printf("Begin to connectSocket...\n");
     datafd = connectSocket(status->pasv_addr, status->pasv_port);
     if (datafd == FAIL) {
       printf("Error connectSocket(): %s(%d)\n", strerror(errno), errno);
@@ -163,6 +165,7 @@ void printReply(int connfd) {
 int readCommand(char *buf, int size) {
   printf("ftp> ");
   fflush(stdout);
+  //fflush(stdin);
 
   memset(buf, 0, size);
   if (fgets(buf, size, stdin) != NULL) {
@@ -176,6 +179,7 @@ int readCommand(char *buf, int size) {
 
 
 int sendFile(int datafd, int connfd, char *filename) {
+  
   FILE *file = NULL;
 
   file = fopen(filename, "rb");
@@ -206,9 +210,10 @@ int sendFile(int datafd, int connfd, char *filename) {
 }
 
 int recvFile(int datafd, int connfd, char *filename) {
+
   FILE *file = NULL;
 
-  file = fopen(filename, "rb");
+  file = fopen(filename, "wb");
   if(!file) {
     printf("Error fopen(): %s(%d)\n", strerror(errno), errno);
     return FAIL;

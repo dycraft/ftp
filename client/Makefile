@@ -1,9 +1,9 @@
 CC=clang
 CFLAGS=-c -Wall
 LDFLAGS=-lm
-SOURCES=main.c client.c command.c util.h
+SOURCES=main.c client.c util.c command.c
 OBJECTS=$(SOURCES:.cpp=.o)
-EXECUTABLE=ftpclient
+EXECUTABLE=client
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
@@ -12,4 +12,4 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	rm -rf *.o ftpclient
+	rm -rf *.o client

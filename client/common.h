@@ -34,7 +34,7 @@ extern char *host;
 extern char *root;
 
 #define DEFAULT_PORT  21
-#define DEFAULT_ROOT  "/tmp"
+#define DEFAULT_ROOT  "tmp/"
 #define DEFAULT_HOST  "127.0.0.1"
 
 struct Status {
@@ -43,7 +43,7 @@ struct Status {
   int mode;
   int pasv_port;
   char *pasv_addr;
-  int port_transfd; // listenfd
+  int port_transfd;
 };
 
 #define MODE_NORM 0

@@ -122,6 +122,7 @@ int createPasvSocket(int listenfd) {
 }
 
 int sendFile(int datafd, int connfd, char *filename) {
+  
   FILE *file = NULL;
 
   file = fopen(filename, "rb");
@@ -162,9 +163,10 @@ int sendFile(int datafd, int connfd, char *filename) {
 }
 
 int recvFile(int datafd, int connfd, char *filename) {
+
   FILE *file = NULL;
 
-  file = fopen(filename, "rb");
+  file = fopen(filename, "wb");
   if(!file) {
     printf("Error fopen(): %s(%d)\n", strerror(errno), errno);
     response(connfd, RC_NO_FILE, "Not found this file or no permission to open.");
@@ -219,6 +221,9 @@ int response(int sockfd, int rc, const char *reply) {
 
 // get server's ip
 int getip(char *ip) {
+  strcpy(ip, "127.0.0.1");
+  return SUCC;
+
   struct ifaddrs *ifAddrStruct = NULL;
   void *tmpAddrPtr = NULL;
   getifaddrs(&ifAddrStruct);

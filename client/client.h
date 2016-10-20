@@ -2,6 +2,7 @@
 #define CLIENT_H
 
 #include "common.h"
+#include "command.h"
 
 // connect server with host address and port
 int connectSocket(char *host, int port);

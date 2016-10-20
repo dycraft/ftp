@@ -42,7 +42,7 @@
 #define DATA_SIZE 256
 
 #define DEFAULT_PORT  21
-#define DEFAULT_ROOT  "/tmp"
+#define DEFAULT_ROOT  "tmp/"
 
 extern int port;
 extern char *root;
@@ -65,7 +65,6 @@ extern char *root;
 #define RC_FILE_OK  150
 #define RC_NO_CNN 425
 #define RC_NET_ERR 426
-#define RC_CLS_CNN  226
 #define RC_LOC_ERR  451
 #define RC_TRANS_OK 226
 

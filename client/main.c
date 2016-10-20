@@ -4,18 +4,22 @@
 
 int handleCommand(struct Command *cmd, struct Status *status);
 
+char *host;
+int port;
+char *root;
+
 int main(int argc, char* arg[]) {
 
-  char *host = "127.0.0.1";
-  char *port = arg[1];
-  char *root = DEFAULT_ROOT;
+  host = "127.0.0.1";
+  int port = atoi(arg[1]);
+  root = DEFAULT_ROOT;
 
   // status init
   struct Status status;
   memset(&status, 0, sizeof(status));
 
   // create socket
-  status.connfd = connectSocket(host, atoi(port));
+  status.connfd = connectSocket(host, port);
   if (status.connfd == FAIL) {
     printf("Error *connectAddress(): %s(%d)\n", strerror(errno), errno);
     return 1;
@@ -70,24 +74,24 @@ int main(int argc, char* arg[]) {
 
 int handleCommand(struct Command *cmd, struct Status *status) {
 
-  // first: recieve reply once (handle normal command)
-  char buf[BUFFER_SIZE];
-  memset(buf, 0, BUFFER_SIZE);
-  if (recvReply(buf, status->connfd) == FAIL) {
-    return FAIL;
-  }
-  printf("%s", buf);
-
   // handle data connection command
   for (int i = 0; i < HANDLE_NUM; i++) {
     if (strcmp(handlelist[i], cmd->name) == 0) {
-      if (handler[i](cmd->arg, buf, status) == FAIL) {
+      if (handler[i](cmd->arg, status) == FAIL) {
         printf("Error %s().\n", cmd->name);
         return FAIL;
       }
       return SUCC;
     }
   }
+
+  // recieve reply once (cmd out of handlelist)
+  char buf[BUFFER_SIZE];
+  memset(buf, 0, BUFFER_SIZE);
+  if (recvReply(buf, status->connfd) == FAIL) {
+    return FAIL;
+  }
+  printf("%s", buf);
 
   return SUCC;
 }

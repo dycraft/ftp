@@ -161,12 +161,19 @@ int cmd_pasv(char *arg, struct Socketfd *fd) {
 
   int port = randPort(fd->connfd);
   fd->transfd = createSocket(port);
+  if (fd->transfd == FAIL) {
+    printf("Error createSocket(%d): %s(%d)\n", port, strerror(errno), errno);
+    response(fd->connfd, RC_LOC_ERR, "Server error: cannot create socket.");
+    return FAIL;
+  }
 
   char buf[BUFFER_SIZE];
   memset(buf, 0, BUFFER_SIZE);
   char ip[16];
   if (getip(ip) == FAIL) {
     printf("Error *getip().");
+    response(fd->connfd, RC_LOC_ERR, "Server error: cannot get server's ip address.");
+    return FAIL;
   }
   if (encodeAddress(buf, ip, port) == FAIL) {
     printf("Error *encodeAddress().\n");
@@ -225,6 +232,7 @@ int cmd_list(char *arg, struct Socketfd *fd) {
 
 // RETR
 int cmd_retr(char *arg, struct Socketfd *fd) {
+
   if (!strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'RETR [filename]'.");
     return FAIL;
@@ -244,6 +252,8 @@ int cmd_retr(char *arg, struct Socketfd *fd) {
   strcat(buf, arg);
   if (sendFile(datafd, fd->connfd, buf) == FAIL) {
     printf("Error *sendFile(%d, %s).", datafd, buf);
+    close(datafd);
+    return FAIL;
   }
 
   close(datafd);
@@ -258,6 +268,7 @@ int cmd_retr(char *arg, struct Socketfd *fd) {
 }
 
 int cmd_stor(char *arg, struct Socketfd *fd) {
+
   if (!strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'STOR [filename]'.");
     return FAIL;

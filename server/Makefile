@@ -3,7 +3,7 @@ CFLAGS=-c -Wall
 LDFLAGS=-lm
 SOURCES=main.c server.c fdlist.c command.c
 OBJECTS=$(SOURCES:.cpp=.o)
-EXECUTABLE=ftpserver
+EXECUTABLE=server
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $@ -lpthread
@@ -12,4 +12,4 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(CFLAGS) $< -o $@ -lpthread
 
 clean:
-	rm -rf *.o ftpserver
+	rm -rf *.o server

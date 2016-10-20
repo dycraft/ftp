@@ -23,11 +23,11 @@ extern int (*handler[])();
 
 int command_parse(struct Command *cmd, char *buf);
 
-int handle_quit(char *arg, char *reply, struct Status *status);
-int handle_port(char *arg, char *reply, struct Status *status);
-int handle_pasv(char *arg, char *reply, struct Status *status);
-int handle_retr(char *arg, char *reply, struct Status *status);
-int handle_stor(char *arg, char *reply, struct Status *status);
-int handle_list(char *arg, char *reply, struct Status *status);
+int handle_quit(char *arg, struct Status *status);
+int handle_port(char *arg, struct Status *status);
+int handle_pasv(char *arg, struct Status *status);
+int handle_retr(char *arg, struct Status *status);
+int handle_stor(char *arg, struct Status *status);
+int handle_list(char *arg, struct Status *status);
 
 #endif
