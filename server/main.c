@@ -38,7 +38,7 @@ int main(int argc, char *arg[]) {
   timeout.tv_sec = 0;
   timeout.tv_usec = 0;
 
-  struct fd_set readfd;
+  fd_set readfd;
   struct FdList fdlist;
   fdlist_init(&fdlist);
 

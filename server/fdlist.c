@@ -32,7 +32,7 @@ int fdlist_max(struct FdList *fdlist) {
 }
 
 // FD_SET
-void fdlist_poll(struct FdList *fdlist, struct fd_set *sockfd) {
+void fdlist_poll(struct FdList *fdlist, fd_set *sockfd) {
   for (int i = 0; i < fdlist->size; i++) {
     FD_SET(fdlist->list[i].connfd, sockfd);
   }
