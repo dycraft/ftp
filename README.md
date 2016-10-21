@@ -2,6 +2,8 @@
 
 ## todolist
 - comment
-- update server's quit as cient
 - server mode convert
 - list
+- client root
+- optional cmd
+- error if no state

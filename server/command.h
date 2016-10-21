@@ -25,7 +25,7 @@
 #define CMD_RNFR  17
 #define CMD_RNTO  18
 
-#define CMD_NUM   19
+#define CMD_NUM   14
 
 
 // struct Command and methods
@@ -59,12 +59,7 @@ int cmd_retr(char *arg, struct Socketfd *fd);
 int cmd_stor(char *arg, struct Socketfd *fd);
 int cmd_abor(char *arg, struct Socketfd *fd);
 int cmd_cwd(char *arg, struct Socketfd *fd);
-
-/* common function in cmd_function */
-
-int randPort(int seed);
-
-int decodeAddress(char *addr, int *port, char *buf);
-int encodeAddress(char *buf, char *addr, int port);
+int cmd_cdup(char *arg, struct Socketfd *fd);
+int cmd_pwd(char *arg, struct Socketfd *fd);
 
 #endif

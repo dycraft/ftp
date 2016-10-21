@@ -1,7 +1,7 @@
 CC=clang
 CFLAGS=-c -Wall
 LDFLAGS=-lm
-SOURCES=main.c server.c fdlist.c command.c
+SOURCES=main.c server.c fdlist.c command.c util.c
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=server
 

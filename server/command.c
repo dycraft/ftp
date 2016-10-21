@@ -1,5 +1,6 @@
 #include "command.h"
 #include "server.h"
+#include "util.h"
 
 /* extern global variables init */
 
@@ -15,7 +16,9 @@ char *cmdlist[] = {
   "RETR",
   "STOR",
   "ABOR",
-  "CWD"
+  "CWD",
+  "CDUP",
+  "PWD"
 };
 
 int (*execlist[])() = {
@@ -30,7 +33,9 @@ int (*execlist[])() = {
   &cmd_retr,
   &cmd_stor,
   &cmd_abor,
-  &cmd_cwd
+  &cmd_cwd,
+  &cmd_cdup,
+  &cmd_pwd
 };
 
 /* command's methods */
@@ -333,60 +338,79 @@ int cmd_cwd(char *arg, struct Socketfd *fd) {
     return FAIL;
   }
 
-  if (access(arg, F_OK) == FAIL) {
-    char buf[BUFFER_SIZE];
-    memset(buf, 0, BUFFER_SIZE);
-    sprintf(buf, "Command argument error, %s doesn't exist.", arg);
-    response(fd->connfd, RC_ARG_ERR, buf);
+  if (arg[0] == '.' || arg[0] == '/') {
+    response(fd->connfd, RC_ARG_ERR, "Command argument error, patterns begin with '.' and '/' are not permitted.");
     return FAIL;
   }
 
   char tmp[DIR_SIZE];
   memset(tmp, 0, DIR_SIZE);
-  strcpy(tmp, fd->dir);
-  sprintf(fd->dir, "%s/%s", tmp, arg);
+  sprintf(tmp, "%s/%s", fd->dir, arg);
+
+  if (!isDir(tmp)) {
+    char buf[BUFFER_SIZE];
+    memset(buf, 0, BUFFER_SIZE);
+    sprintf(buf, "Command argument error, Dir:%s doesn't exist.", tmp);
+    response(fd->connfd, RC_ARG_ERR, buf);
+    return FAIL;
+  }
+
+  // clear the end '/'
+  int end = strlen(fd->dir) - 1;
+  if (fd->dir[end] == '/') {
+    fd->dir[end] = '\0';
+  }
+
+  strcpy(fd->dir, tmp);
+
+  char b[BUFFER_SIZE];
+  memset(b, 0, BUFFER_SIZE);
+  sprintf(b, "Success. DIR: %s", fd->dir);
+  response(fd->connfd, RC_CMD_OK, b);
 
   return SUCC;
 }
 
-/* common function in cmd_function */
-
-int randPort(int seed) {
-  srand(seed);
-  return rand() % (65536 - 20000) + 20000;
-}
-
-int decodeAddress(char *addr, int *port, char *buf) {
-  int h1, h2, h3, h4, p1, p2;
-  int num = sscanf(buf, "%d,%d,%d,%d,%d,%d", &h1, &h2, &h3, &h4, &p1, &p2);
-  if (num != 6) {
+int cmd_cdup(char *arg, struct Socketfd *fd) {
+  if (strlen(arg)) {
+    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'CDUP'.");
     return FAIL;
   }
 
-  // port
-  if ((p1 >= 0) && (p2 >= 0) && (p1 < 256) && (p2 < 256)) {
-    *port = p1 * 256 + p2;
-  } else {
+  if (strcmp(fd->dir, root) == 0) {
+    response(fd->connfd, RC_EXEC_ERR, "Command not permitted, DIR is root dir: /tmp.");
     return FAIL;
   }
 
-  // addr
-  sprintf(addr, "%d.%d.%d.%d", h1, h2, h3, h4);
+  // clear char from end util '/'
+  int end = strlen(fd->dir) - 1;
+  for (int i = end; i > 0; i--) {
+    if (fd->dir[i] == '/') {
+      fd->dir[i] = 0;
+      break;
+    } else {
+      fd->dir[i] = 0;
+    }
+  }
+
+  char b[BUFFER_SIZE];
+  memset(b, 0, BUFFER_SIZE);
+  sprintf(b, "Success. DIR: %s", fd->dir);
+  response(fd->connfd, RC_CMD_OK, b);
 
   return SUCC;
 }
 
-int encodeAddress(char *buf, char *addr, int port) {
-  int h1, h2, h3, h4, p1, p2;
-  int num = sscanf(addr, "%d.%d.%d.%d", &h1, &h2, &h3, &h4);
-  if (num != 4) {
+int cmd_pwd(char *arg, struct Socketfd *fd) {
+  if (strlen(arg)) {
+    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'PWD'.");
     return FAIL;
   }
 
-  p1 = port / 256;
-  p2 = port % 256;
-
-  sprintf(buf, "%d,%d,%d,%d,%d,%d", h1, h2, h3, h4, p1, p2);
+  char b[BUFFER_SIZE];
+  memset(b, 0, BUFFER_SIZE);
+  sprintf(b, "DIR: %s", fd->dir);
+  response(fd->connfd, RC_CMD_OK, b);
 
   return SUCC;
 }

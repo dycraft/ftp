@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 // #include <sys/epoll.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -40,7 +41,7 @@
 
 #define BUFFER_SIZE 512
 #define DATA_SIZE 1024
-#define DIR_SIZE  128
+#define DIR_SIZE  512
 
 #define DEFAULT_PORT  21
 #define DEFAULT_ROOT  "/tmp"
