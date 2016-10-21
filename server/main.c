@@ -10,7 +10,7 @@ int handleCliArg(int argc, char *arg[]);
 // mutithread to execute command
 void *p_executeCommand(void *arg);
 
-struct threadArg {
+struct thread_arg {
   struct Command *cmd;
   struct Socketfd *fd;
 };
@@ -73,21 +73,26 @@ int main(int argc, char *arg[]) {
     //parse command
     for (int i = 0; i < fdlist.size; i++) {
       if (FD_ISSET(fdlist.list[i].connfd, &readfd)) {
+        // if fd is executing command in another thread
+        if (fdlist.list[i].iscmd == true) {
+          continue;
+        }
+
         struct Command cmd;
         memset(&cmd, 0, sizeof(struct Command));
         int r = recvCommand(fdlist.list[i].connfd, &cmd);
         if (r == 0) {
           // disconnect
           FD_CLR(fdlist.list[i].connfd, &readfd);
-          fdlist_del(&fdlist, fdlist.list[i].connfd);
           close(fdlist.list[i].connfd);
+          fdlist_del(&fdlist, fdlist.list[i].connfd);
         } else if (r == -1){
           // timeout
           continue;
         } else {
           // exec cmd in pthread
           pthread_t tid;
-          struct threadArg arg;
+          struct thread_arg arg;
           memset(&arg, 0, sizeof(arg));
           arg.fd = &fdlist.list[i];
           arg.cmd = &cmd;
@@ -101,6 +106,18 @@ int main(int argc, char *arg[]) {
 
       }
     }
+
+    // handle quit fd
+    for (int i = 0; i < fdlist.size; i++) {
+      if (FD_ISSET(fdlist.list[i].connfd, &readfd)) {
+        if (fdlist.list[i].mode == MODE_QUIT) {
+          FD_CLR(fdlist.list[i].connfd, &readfd);
+          close(fdlist.list[i].connfd);
+          fdlist_del(&fdlist, fdlist.list[i].connfd);
+          break;
+        }
+      }
+    }
   }
 
   close(listenfd);
@@ -111,14 +128,17 @@ int main(int argc, char *arg[]) {
 }
 
 void *p_executeCommand(void *arg) {
-  struct Command *cmd = ((struct threadArg *)arg)->cmd;
-  struct Socketfd *fd = ((struct threadArg *)arg)->fd;
+  struct Command *cmd = ((struct thread_arg *)arg)->cmd;
+  struct Socketfd *fd = ((struct thread_arg *)arg)->fd;
+
+  fd->iscmd = true;
 
   for (int i = 0; i < CMD_NUM; i++) {
     if (strcmp(cmdlist[i], cmd->name) == 0) {
       if (execlist[i](cmd->arg, fd) == FAIL) {
         printf("Error %s().\n", cmdlist[i]);
       }
+      fd->iscmd = false;
       return NULL;
     }
   }
@@ -126,6 +146,7 @@ void *p_executeCommand(void *arg) {
   // invalid command
   response(fd->connfd, RC_NO_IMP, "?Invalid Command.");
 
+  fd->iscmd = false;
   return NULL;
 }
 

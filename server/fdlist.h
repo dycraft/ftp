@@ -16,6 +16,7 @@ struct Socketfd {
   int mode;
   struct sockaddr_in addr;
   int transfd;
+  int iscmd;
 };
 
 // init

@@ -5,10 +5,11 @@ void socketfd_init(struct Socketfd *fd) {
 }
 
 void socketfd_copy(struct Socketfd *dstfd, struct Socketfd *srcfd) {
+  socketfd_init(dstfd);
   dstfd->connfd = srcfd->connfd;
   dstfd->mode = srcfd->mode;
   dstfd->transfd = srcfd->transfd;
-  socketfd_init(dstfd);
+  dstfd->iscmd = srcfd->iscmd;
   dstfd->addr.sin_family = srcfd->addr.sin_family;
   dstfd->addr.sin_port = srcfd->addr.sin_port;
   dstfd->addr.sin_addr.s_addr = srcfd->addr.sin_addr.s_addr;
@@ -73,8 +74,12 @@ int fdlist_del(struct FdList *fdlist, int sockfd) {
   for (int i = 0; i < fdlist->size; i++) {
     if (fdlist->list[i].connfd == sockfd) {
       fdlist->size -= 1;
-      socketfd_copy(&fdlist->list[i], &fdlist->list[fdlist->size]);
-      socketfd_init(&fdlist->list[fdlist->size]);
+      if (i != fdlist->size) {
+        socketfd_copy(&fdlist->list[i], &fdlist->list[fdlist->size]);
+        socketfd_init(&fdlist->list[fdlist->size]);
+      } else {
+        socketfd_init(&fdlist->list[fdlist->size]);
+      }
       return SUCC;
     }
   }

@@ -119,6 +119,9 @@ int cmd_quit(char *arg, struct Socketfd *fd) {
 
   response(fd->connfd, RC_LOGOUT, "User log out and quit the client.");
 
+  // handled by main function
+  fd->mode = MODE_QUIT;
+
   return SUCC;
 }
 
@@ -192,8 +195,8 @@ int cmd_pasv(char *arg, struct Socketfd *fd) {
 
   char buffer[BUFFER_SIZE];
   memset(buffer, 0, BUFFER_SIZE);
-  sprintf(buffer, "Entering Passive Mode. (%s)", buf);
-  response(fd->connfd, RC_CMD_OK, buffer);
+  sprintf(buffer, "Entering Passive Mode (%s)", buf);
+  response(fd->connfd, RC_PASV_OK, buffer);
 
   return SUCC;
 }
@@ -254,8 +257,7 @@ int cmd_retr(char *arg, struct Socketfd *fd) {
   // send file
   char buf[BUFFER_SIZE];
   memset(buf, 0, BUFFER_SIZE);
-  strcpy(buf, root);
-  strcat(buf, arg);
+  sprintf(buf, "%s/%s", root, arg);
   if (sendFile(datafd, fd->connfd, buf) == FAIL) {
     printf("Error *sendFile(%d, %s).\n", datafd, buf);
     close(datafd);
@@ -291,8 +293,7 @@ int cmd_stor(char *arg, struct Socketfd *fd) {
   // recv file
   char buf[BUFFER_SIZE];
   memset(buf, 0, BUFFER_SIZE);
-  strcpy(buf, root);
-  strcat(buf, arg);
+  sprintf(buf, "%s/%s", root, arg);
   if (recvFile(datafd, fd->connfd, buf) == FAIL) {
     printf("Error *recvFile(%d, %s).", datafd, buf);
   }
