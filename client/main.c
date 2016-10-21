@@ -1,10 +1,12 @@
 #include "common.h"
 #include "client.h"
 #include "command.h"
-
-//#define printf(...) fprintf(stderr, __VA_ARGS__)
+#include "util.h"
 
 int handleCommand(struct Command *cmd, struct Status *status);
+
+// check command line arguments
+int handleCliArg(int argc, char *arg[]);
 
 char *host;
 int port;
@@ -13,12 +15,16 @@ char *root;
 int main(int argc, char* arg[]) {
 
   host = "127.0.0.1";
-  int port = atoi(arg[1]);
-  root = DEFAULT_ROOT;
+  // check command line arguments
+  if (handleCliArg(argc, arg) == FAIL) {
+   printf("Parameters Error. Input as:\n./client [-port PORT] [-root DIR]\n");
+   return 1;
+  }
 
   // status init
   struct Status status;
   memset(&status, 0, sizeof(status));
+  status.mode = MODE_GUEST;
 
   // create socket
   status.connfd = connectSocket(host, port);
@@ -85,6 +91,46 @@ int handleCommand(struct Command *cmd, struct Status *status) {
     return FAIL;
   }
   printf("%s", buf);
+  if (parseRC(buf) == RC_LOGIN) {
+    status->mode = MODE_NORM;
+  }
+
+  return SUCC;
+}
+
+int handleCliArg(int argc, char *arg[]) {
+  if ((argc != 1) && (argc != 3) && (argc != 5)) {
+    return FAIL;
+  }
+
+  int n_root = 0;
+  int n_port = 0;
+
+  for (int i = 1; i <= argc-2; i += 2) {
+    if (strcmp(arg[i], "-port") == 0) {
+      n_port = i + 1;
+    }
+    if (strcmp(arg[i], "-root") == 0) {
+      n_root = i + 1;
+    }
+  }
+
+  if (n_port == 0) {
+    port = DEFAULT_PORT;
+  } else {
+    port = atoi(arg[n_port]);
+  }
+
+  if (n_root == 0) {
+    root = DEFAULT_ROOT;
+  } else {
+    root = arg[n_root];
+  }
+
+  if (root[1] == '.') {
+    printf("Sorry, we could not provide permission for other folders.\n");
+    return FAIL;
+  }
 
   return SUCC;
 }

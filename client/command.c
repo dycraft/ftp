@@ -123,6 +123,17 @@ int handle_pasv(char *arg, struct Status *status) {
 
 int handle_retr(char *arg, struct Status *status) {
 
+  if (status->mode != MODE_PASV && status->mode != MODE_PORT) {
+    status->mode = MODE_NORM;
+    char reply[BUFFER_SIZE];
+    memset(reply, 0, BUFFER_SIZE);
+    if (recvReply(reply, status->connfd) == FAIL) {
+      return FAIL;
+    }
+    printf("%s", reply);
+    return FAIL;
+  }
+
   int datafd = createDataSocket(status);
   if (datafd == FAIL) {
     return FAIL;
@@ -169,6 +180,17 @@ int handle_retr(char *arg, struct Status *status) {
 }
 
 int handle_stor(char *arg, struct Status *status) {
+
+  if (status->mode != MODE_PASV && status->mode != MODE_PORT) {
+    status->mode = MODE_NORM;
+    char reply[BUFFER_SIZE];
+    memset(reply, 0, BUFFER_SIZE);
+    if (recvReply(reply, status->connfd) == FAIL) {
+      return FAIL;
+    }
+    printf("%s", reply);
+    return FAIL;
+  }
 
   int datafd = createDataSocket(status);
   if (datafd == FAIL) {
