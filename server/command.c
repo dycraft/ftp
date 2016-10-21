@@ -88,6 +88,11 @@ int cmd_user(char *arg, struct Socketfd *fd) {
 // PASS
 int cmd_pass(char *arg, struct Socketfd *fd) {
 
+  if (fd->mode != MODE_USER) {
+    response(fd->connfd, RC_NOT_LOG, "Use USER command first.");
+    return FAIL;
+  }
+
   // login successfully
   response(fd->connfd, RC_LOGIN, "Login successfully, welcome.");
 
@@ -181,6 +186,7 @@ int cmd_port(char *arg, struct Socketfd *fd) {
   }
 
   // restore the sockaddr_in
+  memset(&(fd->addr), 0, sizeof(struct sockaddr_in));
   fd->addr.sin_family = AF_INET;
   fd->addr.sin_port = htons(port);
   inet_pton(AF_INET, address, &fd->addr.sin_addr);
@@ -249,6 +255,12 @@ int cmd_list(char *arg, struct Socketfd *fd) {
 
   if (strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'LIST'.");
+    return FAIL;
+  }
+
+  if (fd->mode != MODE_PASV && fd->mode != MODE_PORT) {
+    response(fd->connfd, RC_EXEC_ERR, "Use PASV or PORT first.");
+    fd->mode = MODE_LOGIN;
     return FAIL;
   }
 
@@ -322,6 +334,12 @@ int cmd_retr(char *arg, struct Socketfd *fd) {
     return FAIL;
   }
 
+  if (fd->mode != MODE_PASV && fd->mode != MODE_PORT) {
+    response(fd->connfd, RC_EXEC_ERR, "Use PASV or PORT first.");
+    fd->mode = MODE_LOGIN;
+    return FAIL;
+  }
+
   // create data connection
   int datafd = createDataSocket(fd);
   if (datafd == FAIL) {
@@ -357,6 +375,12 @@ int cmd_stor(char *arg, struct Socketfd *fd) {
 
   if (!strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'STOR [filename]'.");
+    return FAIL;
+  }
+
+  if (fd->mode != MODE_PASV && fd->mode != MODE_PORT) {
+    response(fd->connfd, RC_EXEC_ERR, "Use PASV or PORT first.");
+    fd->mode = MODE_LOGIN;
     return FAIL;
   }
 

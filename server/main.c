@@ -1,6 +1,8 @@
 #include "server.h"
 #include "fdlist.h"
 
+//#define printf(...) fprintf(stderr, __VA_ARGS__)
+
 int port;
 char *root;
 
@@ -135,7 +137,7 @@ void *p_executeCommand(void *arg) {
 
   for (int i = 0; i < CMD_NUM; i++) {
     if (strcmp(cmdlist[i], cmd->name) == 0) {
-      if (fd->mode == MODE_GUEST && i != 0) {
+      if (fd->mode == MODE_GUEST && i != CMD_USER && i != CMD_QUIT) {
         // not login
         response(fd->connfd, RC_NOT_LOG, "Not login.");
         fd->iscmd = false;
