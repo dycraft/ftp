@@ -18,7 +18,10 @@ char *cmdlist[] = {
   "ABOR",
   "CWD",
   "CDUP",
-  "PWD"
+  "PWD",
+  "DELE",
+  "MKD",
+  "RMD"
 };
 
 int (*execlist[])() = {
@@ -35,7 +38,10 @@ int (*execlist[])() = {
   &cmd_abor,
   &cmd_cwd,
   &cmd_cdup,
-  &cmd_pwd
+  &cmd_pwd,
+  &cmd_dele,
+  &cmd_mkd,
+  &cmd_rmd
 };
 
 /* command's methods */
@@ -411,6 +417,69 @@ int cmd_pwd(char *arg, struct Socketfd *fd) {
   memset(b, 0, BUFFER_SIZE);
   sprintf(b, "DIR: %s", fd->dir);
   response(fd->connfd, RC_CMD_OK, b);
+
+  return SUCC;
+}
+
+int cmd_dele(char *arg, struct Socketfd *fd) {
+  if (!strlen(arg)) {
+    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'DELE [filename]'.");
+    return FAIL;
+  }
+
+  char tmp[DIR_SIZE];
+  memset(tmp, 0, DIR_SIZE);
+  sprintf(tmp, "%s/%s", fd->dir, arg);
+
+  if (unlink(tmp) < 0) {
+    printf("Error unlink(): %s(%d).\n", strerror(errno), errno);
+    response(fd->connfd, RC_ARG_ERR, strerror(errno));
+    return FAIL;
+  }
+
+  response(fd->connfd, RC_CMD_OK, "Success.");
+
+  return SUCC;
+}
+
+int cmd_mkd(char *arg, struct Socketfd *fd) {
+  if (!strlen(arg)) {
+    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'MKD [dirname]'.");
+    return FAIL;
+  }
+
+  char tmp[DIR_SIZE];
+  memset(tmp, 0, DIR_SIZE);
+  sprintf(tmp, "%s/%s", fd->dir, arg);
+
+  if (mkdir(tmp, 0777) < 0) {
+    printf("Error mkdir(): %s(%d).\n", strerror(errno), errno);
+    response(fd->connfd, RC_ARG_ERR, strerror(errno));
+    return FAIL;
+  }
+
+  response(fd->connfd, RC_CMD_OK, "Success.");
+
+  return SUCC;
+}
+
+int cmd_rmd(char *arg, struct Socketfd *fd) {
+  if (!strlen(arg)) {
+    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'RMD [filename]'.");
+    return FAIL;
+  }
+
+  char tmp[DIR_SIZE];
+  memset(tmp, 0, DIR_SIZE);
+  sprintf(tmp, "%s/%s", fd->dir, arg);
+
+  if (rmdir(tmp) < 0) {
+    printf("Error rmdir(): %s(%d).\n", strerror(errno), errno);
+    response(fd->connfd, RC_ARG_ERR, strerror(errno));
+    return FAIL;
+  }
+
+  response(fd->connfd, RC_CMD_OK, "Success.");
 
   return SUCC;
 }
