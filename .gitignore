@@ -2,6 +2,7 @@
 test.c
 test.h
 test
+test*.data
 *tmp/
 .python-version
 
