@@ -16,7 +16,8 @@ struct Socketfd {
   int mode;
   struct sockaddr_in addr;
   int transfd;
-  int iscmd;
+  int iscmd; //  is current connfd executing command?
+  char dir[DIR_SIZE];
 };
 
 // init

@@ -274,7 +274,7 @@ int cmd_retr(char *arg, struct Socketfd *fd) {
   // send file
   char buf[BUFFER_SIZE];
   memset(buf, 0, BUFFER_SIZE);
-  sprintf(buf, "%s/%s", root, arg);
+  sprintf(buf, "%s/%s", fd->dir, arg);
   if (sendFile(datafd, fd->connfd, buf) == FAIL) {
     printf("Error *sendFile(%d, %s).\n", datafd, buf);
     close(datafd);
@@ -310,7 +310,7 @@ int cmd_stor(char *arg, struct Socketfd *fd) {
   // recv file
   char buf[BUFFER_SIZE];
   memset(buf, 0, BUFFER_SIZE);
-  sprintf(buf, "%s/%s", root, arg);
+  sprintf(buf, "%s/%s", fd->dir, arg);
   if (recvFile(datafd, fd->connfd, buf) == FAIL) {
     printf("Error *recvFile(%d, %s).", datafd, buf);
   }
@@ -333,9 +333,18 @@ int cmd_cwd(char *arg, struct Socketfd *fd) {
     return FAIL;
   }
 
-  char buf[BUFFER_SIZE];
-  char *buf = dir;
-  sprintf()
+  if (access(arg, F_OK) == FAIL) {
+    char buf[BUFFER_SIZE];
+    memset(buf, 0, BUFFER_SIZE);
+    sprintf(buf, "Command argument error, %s doesn't exist.", arg);
+    response(fd->connfd, RC_ARG_ERR, buf);
+    return FAIL;
+  }
+
+  char tmp[DIR_SIZE];
+  memset(tmp, 0, DIR_SIZE);
+  strcpy(tmp, fd->dir);
+  sprintf(fd->dir, "%s/%s", tmp, arg);
 
   return SUCC;
 }

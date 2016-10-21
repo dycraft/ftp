@@ -177,7 +177,6 @@ int handleCliArg(int argc, char *arg[]) {
     root = DEFAULT_ROOT;
   } else {
     root = arg[n_root];
-    dir = root;
   }
 
   if (root[0] == '.') {

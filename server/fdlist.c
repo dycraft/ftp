@@ -2,6 +2,7 @@
 
 void socketfd_init(struct Socketfd *fd) {
   memset(fd, 0, sizeof(*fd));
+  strcpy(fd->dir, root);
 }
 
 void socketfd_copy(struct Socketfd *dstfd, struct Socketfd *srcfd) {
@@ -13,6 +14,7 @@ void socketfd_copy(struct Socketfd *dstfd, struct Socketfd *srcfd) {
   dstfd->addr.sin_family = srcfd->addr.sin_family;
   dstfd->addr.sin_port = srcfd->addr.sin_port;
   dstfd->addr.sin_addr.s_addr = srcfd->addr.sin_addr.s_addr;
+  strcpy(dstfd->dir, srcfd->dir);
 }
 
 
