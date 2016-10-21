@@ -135,11 +135,18 @@ void *p_executeCommand(void *arg) {
 
   for (int i = 0; i < CMD_NUM; i++) {
     if (strcmp(cmdlist[i], cmd->name) == 0) {
-      if (execlist[i](cmd->arg, fd) == FAIL) {
-        printf("Error %s().\n", cmdlist[i]);
+      if (fd->mode == MODE_GUEST && i != 0) {
+        // not login
+        response(fd->connfd, RC_NOT_LOG, "Not login.");
+        fd->iscmd = false;
+        return NULL;
+      } else {
+        if (execlist[i](cmd->arg, fd) == FAIL) {
+          printf("Error %s().\n", cmdlist[i]);
+        }
+        fd->iscmd = false;
+        return NULL;
       }
-      fd->iscmd = false;
-      return NULL;
     }
   }
 

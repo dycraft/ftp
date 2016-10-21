@@ -56,6 +56,7 @@ extern char *root;
 #define RC_NO_IMP 502
 #define RC_ARG_ERR  504
 #define RC_EXEC_ERR 550
+#define RC_NOT_LOG  530
 
 #define RC_NEW_USER 220
 #define RC_NEED_PASS  331

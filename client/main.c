@@ -53,9 +53,7 @@ int main(int argc, char* arg[]) {
     }
 
     // parse command
-    if (command_parse(&cmd, buffer) == FAIL) {
-      printf("Error *command_parse().\n");
-    }
+    command_parse(&cmd, buffer);
 
     // handle command
     handleCommand(&cmd, &status);

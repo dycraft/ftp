@@ -1,7 +1,7 @@
 # ftp
 
 ## todolist
-- guest before weite
+- command > 5
 - comment
 - server mode convert | client server
 - list
