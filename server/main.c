@@ -177,6 +177,12 @@ int handleCliArg(int argc, char *arg[]) {
     root = DEFAULT_ROOT;
   } else {
     root = arg[n_root];
+    dir = root;
+  }
+
+  if (root[0] == '.') {
+    printf("Sorry, we could not provide permission for other folders.\n");
+    return FAIL;
   }
 
   return SUCC;

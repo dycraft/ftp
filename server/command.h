@@ -15,8 +15,17 @@
 #define CMD_LIST  7
 #define CMD_RETR  8
 #define CMD_STOR  9
+#define CMD_ABOR  10
+#define CMD_CWD   11
+#define CMD_CDUP  12
+#define CMD_PWD   13
+#define CMD_DELE  14
+#define CMD_MKD   15
+#define CMD_RMD   16
+#define CMD_RNFR  17
+#define CMD_RNTO  18
 
-#define CMD_NUM   10
+#define CMD_NUM   19
 
 
 // struct Command and methods
@@ -48,6 +57,8 @@ int cmd_list(char *arg, struct Socketfd *fd);
 int cmd_pasv(char *arg, struct Socketfd *fd);
 int cmd_retr(char *arg, struct Socketfd *fd);
 int cmd_stor(char *arg, struct Socketfd *fd);
+int cmd_abor(char *arg, struct Socketfd *fd);
+int cmd_cwd(char *arg, struct Socketfd *fd);
 
 /* common function in cmd_function */
 

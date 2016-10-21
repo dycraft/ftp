@@ -13,7 +13,9 @@ char *cmdlist[] = {
   "PASV",
   "LIST",
   "RETR",
-  "STOR"
+  "STOR",
+  "ABOR",
+  "CWD"
 };
 
 int (*execlist[])() = {
@@ -26,7 +28,9 @@ int (*execlist[])() = {
   &cmd_pasv,
   &cmd_list,
   &cmd_retr,
-  &cmd_stor
+  &cmd_stor,
+  &cmd_abor,
+  &cmd_cwd
 };
 
 /* command's methods */
@@ -66,10 +70,6 @@ int cmd_user(char *arg, struct Socketfd *fd) {
 
 // PASS
 int cmd_pass(char *arg, struct Socketfd *fd) {
-  /*if (!strlen(arg)) {
-    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'PASS [email_address]'.");
-    return FAIL;
-  }*/
 
   // login successfully
   response(fd->connfd, RC_LOGIN, "Login successfully, welcome.");
@@ -91,6 +91,7 @@ int cmd_syst(char *arg, struct Socketfd *fd) {
 
 // TYPE
 int cmd_type(char *arg, struct Socketfd *fd) {
+
   if (!strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'TYPE [type_num]'.");
     return FAIL;
@@ -112,8 +113,24 @@ int cmd_type(char *arg, struct Socketfd *fd) {
 
 // QUIT
 int cmd_quit(char *arg, struct Socketfd *fd) {
+
   if (strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'QUIT'.");
+    return FAIL;
+  }
+
+  response(fd->connfd, RC_LOGOUT, "User log out and quit the client.");
+
+  // handled by main function
+  fd->mode = MODE_QUIT;
+
+  return SUCC;
+}
+
+// ABOR
+int cmd_abor(char *arg, struct Socketfd *fd) {
+  if (strlen(arg)) {
+    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'ABOR'.");
     return FAIL;
   }
 
@@ -306,6 +323,19 @@ int cmd_stor(char *arg, struct Socketfd *fd) {
     close(fd->transfd);
     fd->transfd = 0;
   }
+
+  return SUCC;
+}
+
+int cmd_cwd(char *arg, struct Socketfd *fd) {
+  if (!strlen(arg)) {
+    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'CWD [dirname]'.");
+    return FAIL;
+  }
+
+  char buf[BUFFER_SIZE];
+  char *buf = dir;
+  sprintf()
 
   return SUCC;
 }
