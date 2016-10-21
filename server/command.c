@@ -21,7 +21,9 @@ char *cmdlist[] = {
   "PWD",
   "DELE",
   "MKD",
-  "RMD"
+  "RMD",
+  "RNFR",
+  "RNTO"
 };
 
 int (*execlist[])() = {
@@ -41,7 +43,9 @@ int (*execlist[])() = {
   &cmd_pwd,
   &cmd_dele,
   &cmd_mkd,
-  &cmd_rmd
+  &cmd_rmd,
+  &cmd_rnfr,
+  &cmd_rnto
 };
 
 /* command's methods */
@@ -76,6 +80,8 @@ int cmd_user(char *arg, struct Socketfd *fd) {
   // username pass
   response(fd->connfd, RC_NEED_PASS, "Use 'PASS' command to input password.");
 
+  fd->mode = MODE_USER;
+
   return SUCC;
 }
 
@@ -84,6 +90,8 @@ int cmd_pass(char *arg, struct Socketfd *fd) {
 
   // login successfully
   response(fd->connfd, RC_LOGIN, "Login successfully, welcome.");
+
+  fd->mode = MODE_LOGIN;
 
   return SUCC;
 }
@@ -96,6 +104,8 @@ int cmd_syst(char *arg, struct Socketfd *fd) {
   }
 
   response(fd->connfd, RC_SYST, "UNIX Type: L8");
+
+  fd->mode = MODE_LOGIN;
 
   return SUCC;
 }
@@ -118,6 +128,8 @@ int cmd_type(char *arg, struct Socketfd *fd) {
 
   // username pass
   response(fd->connfd, RC_CMD_OK, "Type set to I.");
+
+  fd->mode = MODE_LOGIN;
 
   return SUCC;
 }
@@ -184,6 +196,8 @@ int cmd_port(char *arg, struct Socketfd *fd) {
   sprintf(buf, "Entering Port Mode. (%s)", arg);
   response(fd->connfd, RC_CMD_OK, buf);
 
+  fd->mode = MODE_PORT;
+
   return SUCC;
 }
 
@@ -226,43 +240,76 @@ int cmd_pasv(char *arg, struct Socketfd *fd) {
   sprintf(buffer, "Entering Passive Mode (%s)", buf);
   response(fd->connfd, RC_PASV_OK, buffer);
 
+  fd->mode = MODE_PASV;
+
   return SUCC;
 }
 
 int cmd_list(char *arg, struct Socketfd *fd) {
+
   if (strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'LIST'.");
     return FAIL;
   }
 
+  // create data connection
+  int datafd = createDataSocket(fd);
+  if (datafd == FAIL) {
+    response(fd->connfd, RC_NO_CNN, "No TCP connection was established.");
+    return FAIL;
+  }
+
   // put info into file
-  if (system("ls -l | tail -n+2 > .ls") < 0) {
+  if (execl("cd %s && ls -l | tail -n+2 > .ls", fd->dir) < 0) {
+    response(fd->connfd, RC_EXEC_ERR, "Server execute system command error.");
     printf("Error system(ls).\n");
     return FAIL;
   }
 
   // fopen
-  FILE *file = fopen(".ls", "r");
+  FILE *file = fopen(".ls", "r+");
   if (!file) {
     printf("Error fopen('.ls').\n");
+    response(fd->connfd, RC_NO_FILE, "Server has no permission to open.");
 		return FAIL;
 	}
 
-  /*char buf[DATA_SIZE];
-  memset(buf, 0, DATA_SIZE);
-  if (fread(buf, DATA_SIZE-1, DATA_ITEM, file) == FAIL) {
-    printf("Error fread().\n");
-    return FAIL;
-  }*/
+  char b[BUFFER_SIZE];
+  memset(b, 0, BUFFER_SIZE);
+  sprintf(b, "Server is listing dir:%s ...", fd->dir);
+  response(fd->connfd, RC_FILE_OK, b);
 
-  //response(fd->connfd, RC_CMD_OK, buf);
+  // after first response
+  char buf[DATA_SIZE];
+  int nwrite = 0;
+
+  do {
+    memset(buf, 0, DATA_SIZE);
+    if (fgets(buf, DATA_SIZE, file) == NULL) {
+      break;
+    }
+    printf("%s", buf);
+    nwrite = strlen(buf);
+
+    if (write(datafd, buf, nwrite) < 0) {
+      printf("Error write(): %s(%d)\n", strerror(errno), errno);
+      response(fd->connfd, RC_NET_ERR, "Cannot open data connection, connection closed.");
+      fclose(file);
+      return FAIL;
+    }
+  } while(nwrite > 0);
+
+  response(fd->connfd, RC_TRANS_OK, "LIST successfully.");
 
   fclose(file);
+  close(datafd);
 
   if (system("rm .ls") < 0) {
     printf("Error system(rm).\n");
     return FAIL;
   }
+
+  fd->mode = MODE_LOGIN;
 
   return SUCC;
 }
@@ -301,6 +348,8 @@ int cmd_retr(char *arg, struct Socketfd *fd) {
     fd->transfd = 0;
   }
 
+  fd->mode = MODE_LOGIN;
+
   return SUCC;
 }
 
@@ -334,6 +383,8 @@ int cmd_stor(char *arg, struct Socketfd *fd) {
     close(fd->transfd);
     fd->transfd = 0;
   }
+
+  fd->mode = MODE_LOGIN;
 
   return SUCC;
 }
@@ -371,8 +422,10 @@ int cmd_cwd(char *arg, struct Socketfd *fd) {
 
   char b[BUFFER_SIZE];
   memset(b, 0, BUFFER_SIZE);
-  sprintf(b, "Success. DIR: %s", fd->dir);
+  sprintf(b, "DIR: %s", fd->dir);
   response(fd->connfd, RC_CMD_OK, b);
+
+  fd->mode = MODE_LOGIN;
 
   return SUCC;
 }
@@ -401,8 +454,10 @@ int cmd_cdup(char *arg, struct Socketfd *fd) {
 
   char b[BUFFER_SIZE];
   memset(b, 0, BUFFER_SIZE);
-  sprintf(b, "Success. DIR: %s", fd->dir);
+  sprintf(b, "DIR: %s", fd->dir);
   response(fd->connfd, RC_CMD_OK, b);
+
+  fd->mode = MODE_LOGIN;
 
   return SUCC;
 }
@@ -417,6 +472,8 @@ int cmd_pwd(char *arg, struct Socketfd *fd) {
   memset(b, 0, BUFFER_SIZE);
   sprintf(b, "DIR: %s", fd->dir);
   response(fd->connfd, RC_CMD_OK, b);
+
+  fd->mode = MODE_LOGIN;
 
   return SUCC;
 }
@@ -439,6 +496,8 @@ int cmd_dele(char *arg, struct Socketfd *fd) {
 
   response(fd->connfd, RC_CMD_OK, "Success.");
 
+  fd->mode = MODE_LOGIN;
+
   return SUCC;
 }
 
@@ -460,6 +519,8 @@ int cmd_mkd(char *arg, struct Socketfd *fd) {
 
   response(fd->connfd, RC_CMD_OK, "Success.");
 
+  fd->mode = MODE_LOGIN;
+
   return SUCC;
 }
 
@@ -480,6 +541,58 @@ int cmd_rmd(char *arg, struct Socketfd *fd) {
   }
 
   response(fd->connfd, RC_CMD_OK, "Success.");
+
+  fd->mode = MODE_LOGIN;
+
+  return SUCC;
+}
+
+int cmd_rnfr(char *arg, struct Socketfd *fd) {
+  if (!strlen(arg)) {
+    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'RNFR [oldname]'.");
+    return FAIL;
+  }
+
+  memset(fd->oldname, 0, NAME_SIZE);
+  sprintf(fd->oldname, "%s/%s", fd->dir, arg);
+
+  char b[BUFFER_SIZE];
+  memset(b, 0, BUFFER_SIZE);
+  sprintf(b, "FILE:'%s' ready to rename.", fd->oldname);
+  response(fd->connfd, RC_CMD_OK, b);
+
+  fd->mode = MODE_RENAME;
+
+  return SUCC;
+}
+
+int cmd_rnto(char *arg, struct Socketfd *fd) {
+  if (!strlen(arg)) {
+    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'RNTO [newname]'.");
+    return FAIL;
+  }
+
+  if ((!strlen(fd->oldname)) && (fd->mode != MODE_RENAME)) {
+    response(fd->connfd, RC_EXEC_ERR, "Command error, Use RNTO command after RNTO.");
+    return FAIL;
+  }
+
+  char tmp[NAME_SIZE];
+  memset(tmp, 0, NAME_SIZE);
+  sprintf(tmp, "%s/%s", fd->dir, arg);
+  if (rename(fd->oldname, tmp) < 0) {
+    response(fd->connfd, RC_EXEC_ERR, "Server error, cannot rename file.");
+    return FAIL;
+  }
+
+  char b[BUFFER_SIZE];
+  memset(b, 0, BUFFER_SIZE);
+  sprintf(b, "Rename FILE:'%s' to '%s'.", fd->oldname, arg);
+  response(fd->connfd, RC_CMD_OK, b);
+
+  memset(fd->oldname, 0, NAME_SIZE);
+
+  fd->mode = MODE_LOGIN;
 
   return SUCC;
 }

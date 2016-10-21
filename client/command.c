@@ -51,9 +51,6 @@ int handle_quit(char *arg, struct Status *status) {
 
   // exit
   close(status->connfd);
-  if (status->datafd > 0) {
-    close(status->datafd);
-  }
   exit(0);
 }
 
@@ -98,8 +95,7 @@ int handle_pasv(char *arg, struct Status *status) {
     return FAIL;
   }
   printf("%s", reply);
-
-  if (parseRC(reply) != RC_CMD_OK) {
+  if (parseRC(reply) != RC_PASV_OK) {
     return FAIL;
   }
 
@@ -220,6 +216,11 @@ int handle_stor(char *arg, struct Status *status) {
 
 int handle_list(char *arg, struct Status *status) {
 
+  int datafd = createDataSocket(status);
+  if (datafd == FAIL) {
+    return FAIL;
+  }
+
   // recieve reply
   char reply[BUFFER_SIZE];
   memset(reply, 0, BUFFER_SIZE);
@@ -227,8 +228,37 @@ int handle_list(char *arg, struct Status *status) {
     return FAIL;
   }
   printf("%s", reply);
+  if (parseRC(reply) != RC_FILE_OK) {
+    close(datafd);
+    return FAIL;
+  }
 
   // list
+  char buf[DATA_SIZE];
+  int nread = 0;
+
+  do {
+    memset(buf, 0, DATA_SIZE);
+    nread = read(datafd, buf, DATA_SIZE);
+    if (nread < 0) {
+      printf("Error read(): %s(%d)\n", strerror(errno), errno);
+      return FAIL;
+    }
+
+    printf("%s", buf);
+  } while(nread > 0);
+
+  close(datafd);
+
+  // recv second reply
+  memset(reply, 0, BUFFER_SIZE);
+  if (recvReply(reply, status->connfd) == FAIL) {
+    return FAIL;
+  }
+  printf("%s", reply);
+  if (parseRC(reply) != RC_TRANS_OK) {
+    return FAIL;
+  }
 
   return SUCC;
 }

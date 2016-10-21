@@ -25,7 +25,7 @@
 #define CMD_RNFR  17
 #define CMD_RNTO  18
 
-#define CMD_NUM   17
+#define CMD_NUM   19
 
 
 // struct Command and methods
@@ -64,5 +64,7 @@ int cmd_pwd(char *arg, struct Socketfd *fd);
 int cmd_dele(char *arg, struct Socketfd *fd);
 int cmd_mkd(char *arg, struct Socketfd *fd);
 int cmd_rmd(char *arg, struct Socketfd *fd);
+int cmd_rnfr(char *arg, struct Socketfd *fd);
+int cmd_rnto(char *arg, struct Socketfd *fd);
 
 #endif

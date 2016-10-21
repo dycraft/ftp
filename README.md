@@ -1,9 +1,9 @@
 # ftp
 
 ## todolist
+- guest before weite
 - comment
-- server mode convert
+- server mode convert | client server
 - list
 - client root
-- optional cmd
 - error if no state

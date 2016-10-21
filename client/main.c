@@ -63,9 +63,6 @@ int main(int argc, char* arg[]) {
 
   // close connection safely
   close(status.connfd);
-  if (status.datafd > 0) {
-    close(status.datafd);
-  }
 
   return 0;
 }

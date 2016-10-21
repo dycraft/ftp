@@ -170,8 +170,6 @@ int readCommand(char *buf, int size) {
       if (buf[0] == '\n') {
         continue;
       }
-      //char *c = strchr(buf, '\n');
-      //if (c) *c = '\0';
       return SUCC;
     } else {
       return FAIL;

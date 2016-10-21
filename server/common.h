@@ -42,6 +42,7 @@
 #define BUFFER_SIZE 512
 #define DATA_SIZE 1024
 #define DIR_SIZE  512
+#define NAME_SIZE 128
 
 #define DEFAULT_PORT  21
 #define DEFAULT_ROOT  "/tmp"

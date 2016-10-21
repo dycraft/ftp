@@ -38,7 +38,6 @@ extern char *root;
 
 struct Status {
   int connfd;
-  int datafd;
   int mode;
   int pasv_port;
   char *pasv_addr;
@@ -53,6 +52,7 @@ struct Status {
 //
 #define RC_FILE_OK 150
 #define RC_TRANS_OK 226
+#define RC_PASV_OK 227
 #define RC_CMD_OK 200
 #define RC_LOGOUT 221
 

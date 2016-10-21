@@ -15,6 +15,7 @@ void socketfd_copy(struct Socketfd *dstfd, struct Socketfd *srcfd) {
   dstfd->addr.sin_port = srcfd->addr.sin_port;
   dstfd->addr.sin_addr.s_addr = srcfd->addr.sin_addr.s_addr;
   strcpy(dstfd->dir, srcfd->dir);
+  strcpy(dstfd->oldname, srcfd->oldname);
 }
 
 

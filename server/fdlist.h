@@ -4,10 +4,11 @@
 #include "common.h"
 
 #define MODE_GUEST  1617
-#define MODE_PASS 1819
+#define MODE_USER 1819
 #define MODE_LOGIN  1111
 #define MODE_PASV 1213
 #define MODE_PORT 1415
+#define MODE_RENAME 3333
 #define MODE_QUIT 2222
 
 // description of socket
@@ -16,8 +17,9 @@ struct Socketfd {
   int mode;
   struct sockaddr_in addr;
   int transfd;
-  int iscmd; //  is current connfd executing command?
+  int iscmd; // is current connfd executing command?
   char dir[DIR_SIZE];
+  char oldname[NAME_SIZE];
 };
 
 // init
