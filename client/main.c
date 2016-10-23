@@ -24,7 +24,7 @@ int main(int argc, char* arg[]) {
   // status init
   struct Status status;
   memset(&status, 0, sizeof(status));
-  status.mode = MODE_GUEST;
+  status.mode = MODE_NORM;
 
   // create socket
   status.connfd = connectSocket(host, port);
@@ -91,12 +91,10 @@ int handleCommand(struct Command *cmd, struct Status *status) {
     return FAIL;
   }
   printf("%s", buf);
-  if (parseRC(buf) == RC_LOGIN) {
-    status->mode = MODE_NORM;
-  }
 
   return SUCC;
 }
+
 
 int handleCliArg(int argc, char *arg[]) {
   if ((argc != 1) && (argc != 3) && (argc != 5)) {

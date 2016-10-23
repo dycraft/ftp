@@ -44,7 +44,6 @@ struct Status {
   int port_transfd;
 };
 
-#define MODE_GUEST  0
 #define MODE_NORM 0
 #define MODE_PASV 789
 #define MODE_PORT 456
