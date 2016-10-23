@@ -238,6 +238,18 @@ int handle_stor(char *arg, struct Status *status) {
 
 int handle_list(char *arg, struct Status *status) {
 
+  if (status->mode != MODE_PASV && status->mode != MODE_PORT) {
+    status->mode = MODE_NORM;
+    char reply[BUFFER_SIZE];
+    memset(reply, 0, BUFFER_SIZE);
+    if (recvReply(reply, status->connfd) == FAIL) {
+      return FAIL;
+    }
+    printf("%s", reply);
+    return FAIL;
+  }
+
+  // if mode correct
   int datafd = createDataSocket(status);
   if (datafd == FAIL) {
     return FAIL;

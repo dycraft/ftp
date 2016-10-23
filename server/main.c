@@ -15,7 +15,7 @@ struct thread_arg {
   struct Socketfd *fd;
 };
 
-#define DEBUG_STDOUT
+//#define DEBUG_STDOUT
 
 
 int main(int argc, char *arg[]) {

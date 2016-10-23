@@ -328,55 +328,21 @@ int cmd_list(char *arg, struct Socketfd *fd) {
     return FAIL;
   }
 
-  // put info into file
-  if (execl("cd %s && ls -l | tail -n+2 > .ls", fd->dir) < 0) {
-    response(fd->connfd, RC_EXEC_ERR, "Server execute system command error.");
-    printf("Error system(ls).\n");
-    return FAIL;
-  }
-
-  // fopen
-  FILE *file = fopen(".ls", "r+");
-  if (!file) {
-    printf("Error fopen('.ls').\n");
-    response(fd->connfd, RC_NO_FILE, "Server has no permission to open.");
-		return FAIL;
-	}
-
   char b[BUFFER_SIZE];
   memset(b, 0, BUFFER_SIZE);
   sprintf(b, "Server is listing dir:%s ...", fd->dir);
   response(fd->connfd, RC_FILE_OK, b);
 
-  // after first response
-  char buf[DATA_SIZE];
-  int nwrite = 0;
-
-  do {
-    memset(buf, 0, DATA_SIZE);
-    if (fgets(buf, DATA_SIZE, file) == NULL) {
-      break;
-    }
-    printf("%s", buf);
-    nwrite = strlen(buf);
-
-    if (write(datafd, buf, nwrite) < 0) {
-      printf("Error write(): %s(%d)\n", strerror(errno), errno);
-      response(fd->connfd, RC_NET_ERR, "Cannot open data connection, connection closed.");
-      fclose(file);
-      return FAIL;
-    }
-  } while(nwrite > 0);
-
-  response(fd->connfd, RC_TRANS_OK, "LIST successfully.");
-
-  fclose(file);
+  int p = dup(1);
+  dup2(datafd, 1);
+  char sys[BUFFER_SIZE];
+  memset(sys, 0, BUFFER_SIZE);
+  sprintf(sys, "cd %s && ls -l", fd->dir);
+  system(sys);
+  dup2(p, 1);
   close(datafd);
 
-  if (system("rm .ls") < 0) {
-    printf("Error system(rm).\n");
-    return FAIL;
-  }
+  response(fd->connfd, RC_TRANS_OK, "LIST successfully.");
 
   // init data connection
   memset(&(fd->addr), 0, sizeof(fd->addr));
