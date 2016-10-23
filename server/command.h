@@ -27,6 +27,14 @@
 
 #define CMD_NUM   19
 
+// mode require (MODE defined in fdlist.h)
+// define a set for every require or permission list
+#define RQ_LOGIN  0x00011100
+#define RQ_TRANS  0x00011000
+#define RQ_RENM   0x00100000
+#define RQ_USER   0x00000010
+#define RQ_NONE   0x11111111
+
 
 // struct Command and methods
 #define NAME_LEN  5
@@ -38,6 +46,7 @@ struct Command {
 };
 
 int command_parse(struct Command *cmd, char *buf);
+int check_mode(int connfd, int mode, int require);
 
 
 // cmdlist: cmd_name array

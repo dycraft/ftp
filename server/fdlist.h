@@ -3,20 +3,22 @@
 
 #include "common.h"
 
-#define MODE_GUEST  1617
-#define MODE_USER 1819
-#define MODE_LOGIN  1111
-#define MODE_PASV 1213
-#define MODE_PORT 1415
-#define MODE_RENAME 3333
-#define MODE_QUIT 2222
+#define MODE_GUEST  0x00000001
+#define MODE_USER   0x00000010
+#define MODE_LOGIN  0x00000100
+#define MODE_PASV   0x00001000
+#define MODE_PORT   0x00010000
+#define MODE_RENAME 0x00100000
+#define MODE_QUIT   0x01000000
 
 // description of socket
 struct Socketfd {
   int connfd;
   int mode;
+  
   struct sockaddr_in addr;
   int transfd;
+
   int iscmd; // is current connfd executing command?
   char dir[DIR_SIZE];
   char oldname[NAME_SIZE];

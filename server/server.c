@@ -126,7 +126,7 @@ int sendFile(int datafd, int connfd, char *filename) {
 
   FILE *file = NULL;
 
-  file = fopen(filename, "rb+");
+  file = fopen(filename, "rb");
   if(!file) {
     printf("Error fopen(): %s(%d)\n", strerror(errno), errno);
     response(connfd, RC_NO_FILE, "Not found this file or no permission to open.");

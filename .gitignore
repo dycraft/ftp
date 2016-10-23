@@ -4,6 +4,7 @@ test.h
 test
 test*.data
 *tmp/
+root/*
 .python-version
 
 # Object files

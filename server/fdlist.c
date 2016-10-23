@@ -3,6 +3,7 @@
 void socketfd_init(struct Socketfd *fd) {
   memset(fd, 0, sizeof(*fd));
   strcpy(fd->dir, root);
+  fd->mode = MODE_GUEST;
 }
 
 void socketfd_copy(struct Socketfd *dstfd, struct Socketfd *srcfd) {

@@ -1,8 +1,6 @@
 #include "server.h"
 #include "fdlist.h"
 
-//#define printf(...) fprintf(stderr, __VA_ARGS__)
-
 int port;
 char *root;
 
@@ -17,9 +15,14 @@ struct thread_arg {
   struct Socketfd *fd;
 };
 
+#define DEBUG_STDOUT
 
 
 int main(int argc, char *arg[]) {
+
+  #ifdef DEBUG_STDOUT
+    fclose(stdout);
+  #endif
 
   // check command line arguments
   if (handleCliArg(argc, arg) == FAIL) {
@@ -137,18 +140,11 @@ void *p_executeCommand(void *arg) {
 
   for (int i = 0; i < CMD_NUM; i++) {
     if (strcmp(cmdlist[i], cmd->name) == 0) {
-      if (fd->mode == MODE_GUEST && i != CMD_USER && i != CMD_QUIT) {
-        // not login
-        response(fd->connfd, RC_NOT_LOG, "Not login.");
-        fd->iscmd = false;
-        return NULL;
-      } else {
-        if (execlist[i](cmd->arg, fd) == FAIL) {
-          printf("Error %s().\n", cmdlist[i]);
-        }
-        fd->iscmd = false;
-        return NULL;
+      if (execlist[i](cmd->arg, fd) == FAIL) {
+        printf("Error %s().\n", cmdlist[i]);
       }
+      fd->iscmd = false;
+      return NULL;
     }
   }
 

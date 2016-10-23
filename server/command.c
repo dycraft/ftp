@@ -60,12 +60,39 @@ int command_parse(struct Command * cmd, char *buf) {
   }
 }
 
+int check_mode(int connfd, int mode, int require) {
+
+  if (require & mode) {
+    return true;
+  } else if (require & RQ_USER) {
+    response(connfd, RC_NOT_LOG, "Use USER command first.");
+    return false;
+  } else if (require & RQ_RENM) {
+    response(connfd, RC_EXEC_ERR, "Use RNFR command first.");
+    return false;
+  } else if (require & RQ_TRANS) {
+    response(connfd, RC_EXEC_ERR, "Use PORT or PASV command first.");
+    return false;
+  } else if (require & RQ_LOGIN) {
+    response(connfd, RC_NOT_LOG, "Login first.");
+    return false;
+  } else {
+    return true;
+  }
+}
+
 /* cmd_functions */
 
 // USER
 int cmd_user(char *arg, struct Socketfd *fd) {
+
   if (!strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'USER [username]'.");
+    return FAIL;
+  }
+
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_NONE)) {
     return FAIL;
   }
 
@@ -88,8 +115,8 @@ int cmd_user(char *arg, struct Socketfd *fd) {
 // PASS
 int cmd_pass(char *arg, struct Socketfd *fd) {
 
-  if (fd->mode != MODE_USER) {
-    response(fd->connfd, RC_NOT_LOG, "Use USER command first.");
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_USER)) {
     return FAIL;
   }
 
@@ -103,14 +130,18 @@ int cmd_pass(char *arg, struct Socketfd *fd) {
 
 // SYST
 int cmd_syst(char *arg, struct Socketfd *fd) {
+
   if (strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'SYST'.");
     return FAIL;
   }
 
-  response(fd->connfd, RC_SYST, "UNIX Type: L8");
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_NONE)) {
+    return FAIL;
+  }
 
-  fd->mode = MODE_LOGIN;
+  response(fd->connfd, RC_SYST, "UNIX Type: L8");
 
   return SUCC;
 }
@@ -120,6 +151,11 @@ int cmd_type(char *arg, struct Socketfd *fd) {
 
   if (!strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'TYPE [type_num]'.");
+    return FAIL;
+  }
+
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
     return FAIL;
   }
 
@@ -134,8 +170,6 @@ int cmd_type(char *arg, struct Socketfd *fd) {
   // username pass
   response(fd->connfd, RC_CMD_OK, "Type set to I.");
 
-  fd->mode = MODE_LOGIN;
-
   return SUCC;
 }
 
@@ -144,6 +178,11 @@ int cmd_quit(char *arg, struct Socketfd *fd) {
 
   if (strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'QUIT'.");
+    return FAIL;
+  }
+
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_NONE)) {
     return FAIL;
   }
 
@@ -157,8 +196,14 @@ int cmd_quit(char *arg, struct Socketfd *fd) {
 
 // ABOR
 int cmd_abor(char *arg, struct Socketfd *fd) {
+
   if (strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'ABOR'.");
+    return FAIL;
+  }
+
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_NONE)) {
     return FAIL;
   }
 
@@ -173,16 +218,22 @@ int cmd_abor(char *arg, struct Socketfd *fd) {
 // PORT
 int cmd_port(char *arg, struct Socketfd *fd) {
 
-  char address[16];
-  int port;
   if (!strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'PORT h1,h2,h3,h4,p1,p2'");
     return FAIL;
-  } else {
-    if (decodeAddress(address, &port, arg) == FAIL) {
-      response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'PORT h1,h2,h3,h4,p1,p2', p1,p2 = (0~255).");
-      return FAIL;
-    }
+  }
+
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
+    return FAIL;
+  }
+
+   // check address
+  char address[16];
+  int port;
+  if (decodeAddress(address, &port, arg) == FAIL) {
+    response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'PORT h1,h2,h3,h4,p1,p2', p1,p2 = (0~255).");
+    return FAIL;
   }
 
   // restore the sockaddr_in
@@ -191,6 +242,7 @@ int cmd_port(char *arg, struct Socketfd *fd) {
   fd->addr.sin_port = htons(port);
   inet_pton(AF_INET, address, &fd->addr.sin_addr);
 
+  // clear the pasv mode
   fd->mode = MODE_PORT;
   if (fd->transfd > 0) {
     close(fd->transfd);
@@ -212,6 +264,11 @@ int cmd_pasv(char *arg, struct Socketfd *fd) {
 
   if (strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'PASV'.");
+    return FAIL;
+  }
+
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
     return FAIL;
   }
 
@@ -238,6 +295,7 @@ int cmd_pasv(char *arg, struct Socketfd *fd) {
     return FAIL;
   }
 
+  // clear the port mode
   fd->mode = MODE_PASV;
   memset(&(fd->addr), 0, sizeof(struct sockaddr_in));
 
@@ -258,9 +316,8 @@ int cmd_list(char *arg, struct Socketfd *fd) {
     return FAIL;
   }
 
-  if (fd->mode != MODE_PASV && fd->mode != MODE_PORT) {
-    response(fd->connfd, RC_EXEC_ERR, "Use PASV or PORT first.");
-    fd->mode = MODE_LOGIN;
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_TRANS)) {
     return FAIL;
   }
 
@@ -321,6 +378,13 @@ int cmd_list(char *arg, struct Socketfd *fd) {
     return FAIL;
   }
 
+  // init data connection
+  memset(&(fd->addr), 0, sizeof(fd->addr));
+  if (fd->transfd > 0) {
+    close(fd->transfd);
+    fd->transfd = 0;
+  }
+
   fd->mode = MODE_LOGIN;
 
   return SUCC;
@@ -334,9 +398,8 @@ int cmd_retr(char *arg, struct Socketfd *fd) {
     return FAIL;
   }
 
-  if (fd->mode != MODE_PASV && fd->mode != MODE_PORT) {
-    response(fd->connfd, RC_EXEC_ERR, "Use PASV or PORT first.");
-    fd->mode = MODE_LOGIN;
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_TRANS)) {
     return FAIL;
   }
 
@@ -353,8 +416,6 @@ int cmd_retr(char *arg, struct Socketfd *fd) {
   sprintf(buf, "%s/%s", fd->dir, arg);
   if (sendFile(datafd, fd->connfd, buf) == FAIL) {
     printf("Error *sendFile(%d, %s).\n", datafd, buf);
-    close(datafd);
-    return FAIL;
   }
 
   close(datafd);
@@ -378,8 +439,8 @@ int cmd_stor(char *arg, struct Socketfd *fd) {
     return FAIL;
   }
 
-  if (fd->mode != MODE_PASV && fd->mode != MODE_PORT) {
-    response(fd->connfd, RC_EXEC_ERR, "Use PASV or PORT first.");
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_TRANS)) {
     fd->mode = MODE_LOGIN;
     return FAIL;
   }
@@ -419,6 +480,11 @@ int cmd_cwd(char *arg, struct Socketfd *fd) {
     return FAIL;
   }
 
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
+    return FAIL;
+  }
+
   if (arg[0] == '.' || arg[0] == '/') {
     response(fd->connfd, RC_ARG_ERR, "Command argument error, patterns begin with '.' and '/' are not permitted.");
     return FAIL;
@@ -449,14 +515,17 @@ int cmd_cwd(char *arg, struct Socketfd *fd) {
   sprintf(b, "DIR: %s", fd->dir);
   response(fd->connfd, RC_CMD_OK, b);
 
-  fd->mode = MODE_LOGIN;
-
   return SUCC;
 }
 
 int cmd_cdup(char *arg, struct Socketfd *fd) {
   if (strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'CDUP'.");
+    return FAIL;
+  }
+
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
     return FAIL;
   }
 
@@ -481,8 +550,6 @@ int cmd_cdup(char *arg, struct Socketfd *fd) {
   sprintf(b, "DIR: %s", fd->dir);
   response(fd->connfd, RC_CMD_OK, b);
 
-  fd->mode = MODE_LOGIN;
-
   return SUCC;
 }
 
@@ -492,12 +559,15 @@ int cmd_pwd(char *arg, struct Socketfd *fd) {
     return FAIL;
   }
 
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
+    return FAIL;
+  }
+
   char b[BUFFER_SIZE];
   memset(b, 0, BUFFER_SIZE);
   sprintf(b, "DIR: %s", fd->dir);
   response(fd->connfd, RC_CMD_OK, b);
-
-  fd->mode = MODE_LOGIN;
 
   return SUCC;
 }
@@ -505,6 +575,11 @@ int cmd_pwd(char *arg, struct Socketfd *fd) {
 int cmd_dele(char *arg, struct Socketfd *fd) {
   if (!strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'DELE [filename]'.");
+    return FAIL;
+  }
+
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
     return FAIL;
   }
 
@@ -520,14 +595,17 @@ int cmd_dele(char *arg, struct Socketfd *fd) {
 
   response(fd->connfd, RC_CMD_OK, "Success.");
 
-  fd->mode = MODE_LOGIN;
-
   return SUCC;
 }
 
 int cmd_mkd(char *arg, struct Socketfd *fd) {
   if (!strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'MKD [dirname]'.");
+    return FAIL;
+  }
+
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
     return FAIL;
   }
 
@@ -543,14 +621,17 @@ int cmd_mkd(char *arg, struct Socketfd *fd) {
 
   response(fd->connfd, RC_CMD_OK, "Success.");
 
-  fd->mode = MODE_LOGIN;
-
   return SUCC;
 }
 
 int cmd_rmd(char *arg, struct Socketfd *fd) {
   if (!strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'RMD [filename]'.");
+    return FAIL;
+  }
+
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
     return FAIL;
   }
 
@@ -566,14 +647,17 @@ int cmd_rmd(char *arg, struct Socketfd *fd) {
 
   response(fd->connfd, RC_CMD_OK, "Success.");
 
-  fd->mode = MODE_LOGIN;
-
   return SUCC;
 }
 
 int cmd_rnfr(char *arg, struct Socketfd *fd) {
   if (!strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'RNFR [oldname]'.");
+    return FAIL;
+  }
+
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
     return FAIL;
   }
 
@@ -585,19 +669,18 @@ int cmd_rnfr(char *arg, struct Socketfd *fd) {
   sprintf(b, "FILE:'%s' ready to rename.", fd->oldname);
   response(fd->connfd, RC_CMD_OK, b);
 
-  fd->mode = MODE_RENAME;
-
   return SUCC;
 }
 
 int cmd_rnto(char *arg, struct Socketfd *fd) {
+
   if (!strlen(arg)) {
     response(fd->connfd, RC_SYNTAX_ERR, "Command syntax error, input as 'RNTO [newname]'.");
     return FAIL;
   }
 
-  if ((!strlen(fd->oldname)) && (fd->mode != MODE_RENAME)) {
-    response(fd->connfd, RC_EXEC_ERR, "Command error, Use RNTO command after RNTO.");
+  // check mode
+  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN | RQ_RENM)) {
     return FAIL;
   }
 
@@ -615,8 +698,6 @@ int cmd_rnto(char *arg, struct Socketfd *fd) {
   response(fd->connfd, RC_CMD_OK, b);
 
   memset(fd->oldname, 0, NAME_SIZE);
-
-  fd->mode = MODE_LOGIN;
 
   return SUCC;
 }
