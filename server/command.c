@@ -62,21 +62,21 @@ int command_parse(struct Command * cmd, char *buf) {
 
 int check_mode(int connfd, int mode, int require) {
 
-  if (require & mode) {
+  if ((require & mode) == mode) {
     return true;
-  } else if (require & RQ_USER) {
-    response(connfd, RC_NOT_LOG, "Use USER command first.");
-    return false;
-  } else if (require & RQ_RENM) {
-    response(connfd, RC_EXEC_ERR, "Use RNFR command first.");
+  } else if (require & RQ_LOGIN) {
+    response(connfd, RC_NOT_LOG, "Login first.");
     return false;
   } else if (require & RQ_TRANS) {
     response(connfd, RC_EXEC_ERR, "Use PORT or PASV command first.");
     return false;
-  } else if (require & RQ_LOGIN) {
-    response(connfd, RC_NOT_LOG, "Login first.");
+  } else if (require & RQ_RENM) {
+    response(connfd, RC_EXEC_ERR, "Use RNFR command first.");
     return false;
-  } else {
+  } else if (require & RQ_USER) {
+    response(connfd, RC_NOT_LOG, "Use USER command first.");
+    return false;
+  }   else {
     return true;
   }
 }
@@ -155,7 +155,7 @@ int cmd_type(char *arg, struct Socketfd *fd) {
   }
 
   // check mode
-  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
+  if (!check_mode(fd->connfd, fd->mode, RQ_COMN)) {
     return FAIL;
   }
 
@@ -224,7 +224,7 @@ int cmd_port(char *arg, struct Socketfd *fd) {
   }
 
   // check mode
-  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
+  if (!check_mode(fd->connfd, fd->mode, RQ_COMN)) {
     return FAIL;
   }
 
@@ -268,7 +268,7 @@ int cmd_pasv(char *arg, struct Socketfd *fd) {
   }
 
   // check mode
-  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
+  if (!check_mode(fd->connfd, fd->mode, RQ_COMN)) {
     return FAIL;
   }
 
@@ -317,7 +317,7 @@ int cmd_list(char *arg, struct Socketfd *fd) {
   }
 
   // check mode
-  if (!check_mode(fd->connfd, fd->mode, RQ_TRANS)) {
+  if (!check_mode(fd->connfd, fd->mode, RQ_TRANS | RQ_LOGIN)) {
     return FAIL;
   }
 
@@ -365,7 +365,7 @@ int cmd_retr(char *arg, struct Socketfd *fd) {
   }
 
   // check mode
-  if (!check_mode(fd->connfd, fd->mode, RQ_TRANS)) {
+  if (!check_mode(fd->connfd, fd->mode, RQ_TRANS | RQ_LOGIN)) {
     return FAIL;
   }
 
@@ -406,7 +406,7 @@ int cmd_stor(char *arg, struct Socketfd *fd) {
   }
 
   // check mode
-  if (!check_mode(fd->connfd, fd->mode, RQ_TRANS)) {
+  if (!check_mode(fd->connfd, fd->mode, RQ_TRANS | RQ_LOGIN)) {
     fd->mode = MODE_LOGIN;
     return FAIL;
   }
@@ -447,7 +447,7 @@ int cmd_cwd(char *arg, struct Socketfd *fd) {
   }
 
   // check mode
-  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
+  if (!check_mode(fd->connfd, fd->mode, RQ_COMN)) {
     return FAIL;
   }
 
@@ -491,7 +491,7 @@ int cmd_cdup(char *arg, struct Socketfd *fd) {
   }
 
   // check mode
-  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
+  if (!check_mode(fd->connfd, fd->mode, RQ_COMN)) {
     return FAIL;
   }
 
@@ -526,7 +526,7 @@ int cmd_pwd(char *arg, struct Socketfd *fd) {
   }
 
   // check mode
-  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
+  if (!check_mode(fd->connfd, fd->mode, RQ_COMN)) {
     return FAIL;
   }
 
@@ -545,7 +545,7 @@ int cmd_dele(char *arg, struct Socketfd *fd) {
   }
 
   // check mode
-  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
+  if (!check_mode(fd->connfd, fd->mode, RQ_COMN)) {
     return FAIL;
   }
 
@@ -571,7 +571,7 @@ int cmd_mkd(char *arg, struct Socketfd *fd) {
   }
 
   // check mode
-  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
+  if (!check_mode(fd->connfd, fd->mode, RQ_COMN)) {
     return FAIL;
   }
 
@@ -597,7 +597,7 @@ int cmd_rmd(char *arg, struct Socketfd *fd) {
   }
 
   // check mode
-  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
+  if (!check_mode(fd->connfd, fd->mode, RQ_COMN)) {
     return FAIL;
   }
 
@@ -623,7 +623,7 @@ int cmd_rnfr(char *arg, struct Socketfd *fd) {
   }
 
   // check mode
-  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN)) {
+  if (!check_mode(fd->connfd, fd->mode, RQ_COMN)) {
     return FAIL;
   }
 
@@ -646,7 +646,7 @@ int cmd_rnto(char *arg, struct Socketfd *fd) {
   }
 
   // check mode
-  if (!check_mode(fd->connfd, fd->mode, RQ_LOGIN | RQ_RENM)) {
+  if (!check_mode(fd->connfd, fd->mode, RQ_COMN)) {
     return FAIL;
   }
 

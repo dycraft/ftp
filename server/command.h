@@ -29,10 +29,11 @@
 
 // mode require (MODE defined in fdlist.h)
 // define a set for every require or permission list
-#define RQ_LOGIN  0x00011100
+#define RQ_LOGIN  0x00000100
 #define RQ_TRANS  0x00011000
 #define RQ_RENM   0x00100000
 #define RQ_USER   0x00000010
+#define RQ_COMN   0x00111100 // COMN = LOGIN | TRANS | RENM
 #define RQ_NONE   0x11111111
 
 
