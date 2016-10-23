@@ -29,6 +29,8 @@ test*.data
 *.dylib
 
 # Executables
+server/server
+client/client
 *.exe
 *.out
 *.app
